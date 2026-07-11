@@ -98,12 +98,27 @@ export default async function handler(req, res) {
     // 번호 검증 & 보정 (1~45, 중복 제거, 6개 보장)
     const clean = sanitizeNumbers(parsed.numbers, parsed.bonus);
 
+    // Supabase에 결과 저장 (실패해도 추천 결과는 그대로 반환)
+    const saveResult = await saveToSupabase({
+      birth_date: birthDate,
+      birth_time: timeUnknown ? null : (birthTime || null),
+      time_unknown: !!timeUnknown,
+      gender,
+      calendar,
+      saju: parsed.saju || '',
+      summary: parsed.summary || '',
+      numbers: clean.numbers,
+      bonus: clean.bonus,
+      reason: parsed.reason || '',
+    });
+
     return res.status(200).json({
       saju: parsed.saju || '',
       summary: parsed.summary || '',
       numbers: clean.numbers,
       bonus: clean.bonus,
       reason: parsed.reason || '',
+      saved: saveResult.saved,
     });
   } catch (err) {
     return res.status(500).json({ error: '서버 오류: ' + (err.message || String(err)) });
@@ -132,4 +147,39 @@ function sanitizeNumbers(rawNumbers, rawBonus) {
     } while (numbers.includes(bonus));
   }
   return { numbers, bonus };
+}
+
+// Supabase REST(PostgREST)로 레코드 저장. 실패해도 예외를 던지지 않음.
+async function saveToSupabase(record) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  // 환경변수가 없으면 저장 생략(추천 기능 자체는 계속 동작)
+  if (!url || !key) {
+    console.warn('Supabase 환경변수(SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)가 설정되지 않아 저장을 건너뜁니다.');
+    return { saved: false };
+  }
+
+  try {
+    const res = await fetch(`${url}/rest/v1/saju_records`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': key,
+        'Authorization': `Bearer ${key}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(record),
+    });
+
+    if (!res.ok) {
+      const detail = await res.text();
+      console.error('Supabase 저장 실패:', res.status, detail);
+      return { saved: false };
+    }
+    return { saved: true };
+  } catch (err) {
+    console.error('Supabase 저장 예외:', err.message || err);
+    return { saved: false };
+  }
 }
