@@ -260,6 +260,138 @@
   }
   .mini-plus { color: var(--body-muted); font-size: 20px; padding: 0 2px; }
 
+  /* ---- Saju tile (parchment) ---- */
+  .saju-tile {
+    background: var(--parchment);
+    padding: 72px 24px 80px;
+  }
+  .saju-inner { max-width: 640px; margin: 0 auto; }
+  .saju-tile h2 {
+    font-family: var(--font-display);
+    font-size: 40px; font-weight: 600;
+    line-height: 1.1; text-align: center; margin-bottom: 8px;
+    color: var(--ink);
+  }
+  .saju-tile .sub {
+    text-align: center; color: var(--ink-muted-80);
+    font-size: 17px; letter-spacing: -0.374px; margin-bottom: 40px;
+  }
+
+  /* Input card */
+  .saju-form {
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field label {
+    font-size: 14px; font-weight: 600;
+    letter-spacing: -0.224px; color: var(--ink);
+  }
+  .field input[type="date"],
+  .field input[type="time"] {
+    font-family: var(--font-text);
+    font-size: 17px; letter-spacing: -0.374px;
+    color: var(--ink);
+    border: 1px solid var(--hairline);
+    border-radius: 11px;
+    padding: 12px 14px;
+    background: var(--canvas);
+    width: 100%;
+  }
+  .field input:focus { outline: 2px solid var(--primary-focus); outline-offset: 0; border-color: transparent; }
+  .field.disabled input { opacity: 0.4; pointer-events: none; }
+
+  .segmented { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg-btn {
+    flex: 1; min-width: 72px;
+    font-family: var(--font-text);
+    font-size: 15px; letter-spacing: -0.224px;
+    color: var(--ink);
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: 9999px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .seg-btn:active { transform: scale(0.95); }
+  .seg-btn.active {
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: inset 0 0 0 1px var(--primary);
+  }
+
+  .checkbox-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; letter-spacing: -0.224px; color: var(--ink-muted-80);
+    cursor: pointer;
+  }
+  .checkbox-row input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+  .saju-form .btn-primary { align-self: stretch; margin-top: 4px; }
+
+  /* Chat / result area */
+  .saju-chat { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .bubble {
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: 18px;
+    padding: 20px 22px;
+    animation: rise 0.4s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes rise {
+    0% { transform: translateY(12px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  .bubble .who {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600; letter-spacing: -0.224px;
+    color: var(--ink); margin-bottom: 12px;
+  }
+  .bubble .avatar {
+    width: 28px; height: 28px; border-radius: 9999px;
+    background: var(--primary); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  .bubble p { font-size: 17px; line-height: 1.47; letter-spacing: -0.374px; color: var(--ink-muted-80); margin-bottom: 12px; }
+  .bubble p:last-child { margin-bottom: 0; }
+  .bubble .summary {
+    font-family: var(--font-display);
+    font-size: 21px; font-weight: 600; letter-spacing: 0.231px;
+    color: var(--ink); margin-bottom: 16px;
+  }
+  .bubble .rec-balls {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    margin: 16px 0;
+  }
+  .bubble .rec-ball {
+    width: 52px; height: 52px; border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 21px; font-weight: 600; color: #fff;
+    box-shadow: var(--product-shadow);
+  }
+  .bubble .rec-plus { font-size: 24px; color: var(--ink-muted-48); }
+  .bubble .reason { font-size: 14px; line-height: 1.5; color: var(--ink-muted-48); letter-spacing: -0.224px; }
+
+  .loading-bubble { display: flex; align-items: center; gap: 10px; color: var(--ink-muted-48); font-size: 17px; letter-spacing: -0.374px; }
+  .dots span {
+    display: inline-block; width: 7px; height: 7px; border-radius: 9999px;
+    background: var(--ink-muted-48); margin: 0 2px;
+    animation: blink 1.2s infinite both;
+  }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+  .error-bubble { border-color: #ff7272; color: #c0392b; font-size: 15px; letter-spacing: -0.224px; }
+
   /* ---- Footer ---- */
   footer {
     background: var(--parchment);
@@ -308,6 +440,48 @@
     <div class="actions">
       <button class="btn-primary" id="drawBtn" onclick="draw()">추첨 시작</button>
       <button class="btn-secondary" id="clearBtn" onclick="clearHistory()">기록 지우기</button>
+    </div>
+  </section>
+
+  <section class="saju-tile">
+    <div class="saju-inner">
+      <h2>사주 번호 추천</h2>
+      <p class="sub">생년월일과 태어난 시간을 입력하면 AI가 사주를 풀어 번호를 추천해요.</p>
+
+      <div class="saju-form">
+        <div class="field">
+          <label for="birthDate">생년월일</label>
+          <input type="date" id="birthDate">
+        </div>
+
+        <div class="field">
+          <label>양력 / 음력</label>
+          <div class="segmented" id="calendarSeg">
+            <button type="button" class="seg-btn active" data-value="solar">양력</button>
+            <button type="button" class="seg-btn" data-value="lunar">음력</button>
+          </div>
+        </div>
+
+        <div class="field" id="timeField">
+          <label for="birthTime">태어난 시간</label>
+          <input type="time" id="birthTime">
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" id="timeUnknown"> 태어난 시간을 몰라요
+        </label>
+
+        <div class="field">
+          <label>성별</label>
+          <div class="segmented" id="genderSeg">
+            <button type="button" class="seg-btn active" data-value="male">남성</button>
+            <button type="button" class="seg-btn" data-value="female">여성</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="sajuBtn" onclick="analyzeSaju()">사주 분석하고 번호 받기</button>
+      </div>
+
+      <div class="saju-chat" id="sajuChat"></div>
     </div>
   </section>
 
@@ -472,6 +646,122 @@
     count = 0;
     const h = document.getElementById('history');
     h.innerHTML = '<p class="history-empty" id="historyEmpty">아직 추첨 기록이 없습니다.</p>';
+  }
+
+  /* ---------- 사주 챗봇 ---------- */
+
+  // 세그먼트 버튼(양/음, 성별) 토글
+  function setupSegmented(id) {
+    const seg = document.getElementById(id);
+    seg.addEventListener('click', (e) => {
+      const btn = e.target.closest('.seg-btn');
+      if (!btn) return;
+      seg.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  }
+  setupSegmented('calendarSeg');
+  setupSegmented('genderSeg');
+
+  function segValue(id) {
+    return document.querySelector(`#${id} .seg-btn.active`).dataset.value;
+  }
+
+  // "시간 모름" 체크 시 시간 입력 비활성화
+  document.getElementById('timeUnknown').addEventListener('change', (e) => {
+    document.getElementById('timeField').classList.toggle('disabled', e.target.checked);
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  async function analyzeSaju() {
+    const btn = document.getElementById('sajuBtn');
+    const chat = document.getElementById('sajuChat');
+    const birthDate = document.getElementById('birthDate').value;
+    const timeUnknown = document.getElementById('timeUnknown').checked;
+    const birthTime = document.getElementById('birthTime').value;
+
+    if (!birthDate) {
+      showError('생년월일을 입력해주세요.');
+      return;
+    }
+
+    const payload = {
+      birthDate,
+      birthTime,
+      timeUnknown,
+      gender: segValue('genderSeg'),
+      calendar: segValue('calendarSeg'),
+    };
+
+    btn.disabled = true;
+    btn.textContent = '분석 중...';
+
+    // 로딩 버블
+    const loading = document.createElement('div');
+    loading.className = 'bubble loading-bubble';
+    loading.innerHTML = `<span>🔮</span> 사주를 분석하고 있어요 <span class="dots"><span></span><span></span><span></span></span>`;
+    chat.insertBefore(loading, chat.firstChild);
+
+    try {
+      const res = await fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      loading.remove();
+
+      if (!res.ok) {
+        showError(data.error || '분석에 실패했어요. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+
+      renderResult(data);
+    } catch (err) {
+      loading.remove();
+      showError('네트워크 오류가 발생했어요. 인터넷 연결을 확인해주세요.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '다시 분석하기';
+    }
+  }
+
+  function renderResult(data) {
+    const chat = document.getElementById('sajuChat');
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+
+    let ballsHtml = '';
+    data.numbers.forEach(n => {
+      ballsHtml += `<span class="rec-ball" style="background:${colorFor(n)}">${n}</span>`;
+    });
+    ballsHtml += `<span class="rec-plus">+</span>`;
+    ballsHtml += `<span class="rec-ball" style="background:${colorFor(data.bonus)}">${data.bonus}</span>`;
+
+    bubble.innerHTML = `
+      <div class="who"><span class="avatar">🔮</span> 사주 도우미</div>
+      ${data.summary ? `<div class="summary">${escapeHtml(data.summary)}</div>` : ''}
+      ${data.saju ? `<p>${escapeHtml(data.saju)}</p>` : ''}
+      <div class="rec-balls">${ballsHtml}</div>
+      ${data.reason ? `<p class="reason">${escapeHtml(data.reason)}</p>` : ''}
+    `;
+    chat.insertBefore(bubble, chat.firstChild);
+
+    // 추첨 기록에도 저장
+    addHistory(data.numbers, data.bonus);
+  }
+
+  function showError(msg) {
+    const chat = document.getElementById('sajuChat');
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble error-bubble';
+    bubble.textContent = '⚠️ ' + msg;
+    chat.insertBefore(bubble, chat.firstChild);
   }
 </script>
 </body>
