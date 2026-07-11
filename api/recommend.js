@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   }
 
   // 모델 이름은 환경변수로 교체 가능. API 키가 접근 가능한 실제 모델 ID여야 합니다.
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  const model = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
