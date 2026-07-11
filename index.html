@@ -390,7 +390,7 @@
   .dots span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
 
-  .error-bubble { border-color: #ff7272; color: #c0392b; font-size: 15px; letter-spacing: -0.224px; }
+  .error-bubble { border-color: #ff7272; color: #c0392b; font-size: 15px; letter-spacing: -0.224px; white-space: pre-wrap; word-break: break-word; }
 
   /* ---- Footer ---- */
   footer {
@@ -717,7 +717,9 @@
       loading.remove();
 
       if (!res.ok) {
-        showError(data.error || '분석에 실패했어요. 잠시 후 다시 시도해주세요.');
+        let msg = data.error || '분석에 실패했어요. 잠시 후 다시 시도해주세요.';
+        if (data.detail) msg += '\n\n상세: ' + data.detail;
+        showError(msg);
         return;
       }
 
