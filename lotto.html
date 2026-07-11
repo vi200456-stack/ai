@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>로또 추첨기</title>
+<style>
+  :root {
+    /* Colors */
+    --primary: #0066cc;
+    --primary-focus: #0071e3;
+    --primary-on-dark: #2997ff;
+    --ink: #1d1d1f;
+    --ink-muted-80: #333333;
+    --ink-muted-48: #7a7a7a;
+    --body-on-dark: #ffffff;
+    --body-muted: #cccccc;
+    --canvas: #ffffff;
+    --parchment: #f5f5f7;
+    --surface-pearl: #fafafc;
+    --tile-dark: #272729;
+    --hairline: #e0e0e0;
+    --divider-soft: #f0f0f0;
+
+    /* Fonts */
+    --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-text: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* The single system shadow — product objects only */
+    --product-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; }
+
+  body {
+    font-family: var(--font-text);
+    background: var(--canvas);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ---- Global nav ---- */
+  .global-nav {
+    background: #000;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--body-on-dark);
+    font-size: 12px;
+    letter-spacing: -0.12px;
+  }
+
+  /* ---- Hero tile ---- */
+  .hero {
+    background: var(--parchment);
+    text-align: center;
+    padding: 80px 24px 64px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 600;
+    line-height: 1.07;
+    letter-spacing: -0.28px;
+    color: var(--ink);
+  }
+  .hero p {
+    margin-top: 17px;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 1.14;
+    letter-spacing: 0.196px;
+    color: var(--ink-muted-80);
+  }
+
+  /* ---- Draw tile ---- */
+  .draw-tile {
+    background: var(--canvas);
+    text-align: center;
+    padding: 56px 24px 72px;
+  }
+
+  /* Drawing machine dome */
+  .machine {
+    max-width: 520px;
+    margin: 0 auto 40px;
+    aspect-ratio: 16 / 10;
+    border-radius: 9999px 9999px 24px 24px;
+    background: radial-gradient(circle at 50% 38%, #ffffff 0%, #f0f0f2 55%, #e6e6ea 100%);
+    border: 1px solid var(--hairline);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .machine.spinning .swarm { animation-play-state: running; opacity: 1; }
+  .swarm {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .swarm span {
+    position: absolute;
+    width: 34px; height: 34px;
+    border-radius: 9999px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: rgba(0,0,0,0.15) 1px 2px 8px 0;
+  }
+  @keyframes float1 { 0%{transform:translate(20px,180px)} 25%{transform:translate(120px,40px)} 50%{transform:translate(230px,150px)} 75%{transform:translate(150px,60px)} 100%{transform:translate(20px,180px)} }
+  @keyframes float2 { 0%{transform:translate(300px,60px)} 25%{transform:translate(180px,170px)} 50%{transform:translate(60px,50px)} 75%{transform:translate(240px,120px)} 100%{transform:translate(300px,60px)} }
+  @keyframes float3 { 0%{transform:translate(150px,30px)} 25%{transform:translate(40px,120px)} 50%{transform:translate(280px,180px)} 75%{transform:translate(120px,90px)} 100%{transform:translate(150px,30px)} }
+  @keyframes float4 { 0%{transform:translate(260px,190px)} 25%{transform:translate(220px,50px)} 50%{transform:translate(90px,160px)} 75%{transform:translate(30px,70px)} 100%{transform:translate(260px,190px)} }
+  @keyframes float5 { 0%{transform:translate(90px,90px)} 25%{transform:translate(280px,100px)} 50%{transform:translate(160px,200px)} 75%{transform:translate(60px,140px)} 100%{transform:translate(90px,90px)} }
+
+  .machine-label {
+    position: relative;
+    z-index: 2;
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: 0.231px;
+    color: var(--ink-muted-48);
+    transition: opacity 0.3s ease;
+  }
+  .machine.spinning .machine-label { opacity: 0; }
+
+  /* Drawn result balls */
+  .balls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    min-height: 84px;
+    margin-bottom: 44px;
+  }
+  .ball, .placeholder {
+    width: 84px; height: 84px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .placeholder {
+    background: var(--parchment);
+    border: 1px solid var(--hairline);
+  }
+  .ball {
+    font-family: var(--font-display);
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.374px;
+    color: var(--body-on-dark);
+    box-shadow: var(--product-shadow);
+  }
+  .ball.rolling { animation: shake 0.35s linear infinite; }
+  @keyframes shake {
+    0%,100% { transform: translateY(0) rotate(0); }
+    25% { transform: translateY(-3px) rotate(-6deg); }
+    75% { transform: translateY(3px) rotate(6deg); }
+  }
+  .ball.locked { animation: pop 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+  @keyframes pop {
+    0% { transform: scale(1.25); }
+    60% { transform: scale(0.94); }
+    100% { transform: scale(1); }
+  }
+
+  .plus {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 400;
+    color: var(--ink-muted-48);
+    line-height: 84px;
+  }
+  .bonus-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bonus-label {
+    font-size: 12px;
+    letter-spacing: -0.12px;
+    color: var(--ink-muted-48);
+  }
+
+  /* ---- Buttons ---- */
+  .btn-primary {
+    background: var(--primary);
+    color: #fff; border: none;
+    font-family: var(--font-text);
+    font-size: 17px; font-weight: 400;
+    letter-spacing: -0.374px; line-height: 1;
+    border-radius: 9999px; padding: 14px 28px;
+    cursor: pointer; transition: transform 0.12s ease;
+  }
+  .btn-primary:active { transform: scale(0.95); }
+  .btn-primary:focus-visible { outline: 2px solid var(--primary-focus); outline-offset: 2px; }
+  .btn-primary:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+  .btn-secondary {
+    background: transparent; color: var(--primary);
+    border: 1px solid var(--primary);
+    font-family: var(--font-text);
+    font-size: 17px; font-weight: 400;
+    letter-spacing: -0.374px; line-height: 1;
+    border-radius: 9999px; padding: 13px 27px;
+    cursor: pointer; transition: transform 0.12s ease;
+  }
+  .btn-secondary:active { transform: scale(0.95); }
+  .btn-secondary:focus-visible { outline: 2px solid var(--primary-focus); outline-offset: 2px; }
+  .btn-secondary:disabled { opacity: 0.4; cursor: default; }
+
+  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* ---- History tile ---- */
+  .history-tile {
+    background: var(--tile-dark);
+    color: var(--body-on-dark);
+    padding: 64px 24px 80px;
+  }
+  .history-inner { max-width: 680px; margin: 0 auto; }
+  .history-tile h2 {
+    font-family: var(--font-display);
+    font-size: 40px; font-weight: 600;
+    line-height: 1.1; text-align: center; margin-bottom: 8px;
+  }
+  .history-tile .sub {
+    text-align: center; color: var(--body-muted);
+    font-size: 17px; letter-spacing: -0.374px; margin-bottom: 40px;
+  }
+  .history-list { display: flex; flex-direction: column; gap: 16px; }
+  .history-empty {
+    text-align: center; color: var(--ink-muted-48);
+    font-size: 17px; letter-spacing: -0.374px;
+  }
+  .history-item {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    flex-wrap: wrap;
+  }
+  .history-item .idx {
+    color: var(--body-muted);
+    font-size: 14px; letter-spacing: -0.224px;
+    width: 36px; flex-shrink: 0;
+  }
+  .mini {
+    width: 34px; height: 34px;
+    border-radius: 9999px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600; color: #fff; flex-shrink: 0;
+  }
+  .mini-plus { color: var(--body-muted); font-size: 20px; padding: 0 2px; }
+
+  /* ---- Footer ---- */
+  footer {
+    background: var(--parchment);
+    color: var(--ink-muted-48);
+    text-align: center; padding: 32px 24px;
+    font-size: 12px; letter-spacing: -0.12px; line-height: 1.3;
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 48px 20px; }
+    .hero h1 { font-size: 34px; }
+    .hero p { font-size: 21px; }
+    .ball, .placeholder { width: 60px; height: 60px; }
+    .ball { font-size: 24px; }
+    .plus { font-size: 28px; line-height: 60px; }
+    .balls { gap: 10px; }
+    .history-tile h2 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+  <nav class="global-nav">🍎 로또 6/45</nav>
+
+  <section class="hero">
+    <h1>로또 추첨기</h1>
+    <p>본번호 6개 + 보너스 1개.</p>
+  </section>
+
+  <section class="draw-tile">
+    <div class="machine" id="machine">
+      <div class="swarm" id="swarm"></div>
+      <span class="machine-label">추첨 대기</span>
+    </div>
+
+    <div class="balls" id="balls">
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
+      <div class="placeholder"></div>
+      <span class="plus">+</span>
+      <div class="placeholder"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="drawBtn" onclick="draw()">추첨 시작</button>
+      <button class="btn-secondary" id="clearBtn" onclick="clearHistory()">기록 지우기</button>
+    </div>
+  </section>
+
+  <section class="history-tile">
+    <div class="history-inner">
+      <h2>추첨 기록</h2>
+      <p class="sub">본번호 6개와 보너스 번호가 함께 기록됩니다.</p>
+      <div class="history-list" id="history">
+        <p class="history-empty" id="historyEmpty">아직 추첨 기록이 없습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    본 도구는 무작위 번호 생성기이며 당첨을 보장하지 않습니다.
+  </footer>
+
+<script>
+  let count = 0;
+  const swarmAnims = ['float1','float2','float3','float4','float5'];
+
+  function colorFor(n) {
+    if (n <= 10) return '#fbc400';   // 노랑
+    if (n <= 20) return '#69c8f2';   // 파랑
+    if (n <= 30) return '#ff7272';   // 빨강
+    if (n <= 40) return '#3a3a3c';   // 진회색
+    return '#b0d840';                 // 초록
+  }
+
+  // 본번호 6개 + 보너스 1개 (총 7개 서로 다른 번호)
+  function drawNumbers() {
+    const pool = Array.from({length: 45}, (_, i) => i + 1);
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const main = pool.slice(0, 6).sort((a, b) => a - b);
+    const bonus = pool[6];
+    return { main, bonus };
+  }
+
+  // 추첨기 안을 떠다니는 공 채우기
+  function fillSwarm() {
+    const swarm = document.getElementById('swarm');
+    swarm.innerHTML = '';
+    for (let i = 0; i < 18; i++) {
+      const n = Math.floor(Math.random() * 45) + 1;
+      const s = document.createElement('span');
+      s.textContent = n;
+      s.style.background = colorFor(n);
+      const anim = swarmAnims[i % swarmAnims.length];
+      const dur = (2.5 + Math.random() * 2).toFixed(2);
+      s.style.animation = `${anim} ${dur}s ease-in-out infinite`;
+      s.style.animationDelay = `-${(Math.random() * 3).toFixed(2)}s`;
+      swarm.appendChild(s);
+    }
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // 슬롯 하나를 "굴리다가" 최종 번호로 확정
+  function revealBall(slot, value) {
+    return new Promise(resolve => {
+      slot.className = 'ball rolling';
+      slot.style.background = '#c9c9cf';
+      slot.textContent = '?';
+
+      const rollTimer = setInterval(() => {
+        const r = Math.floor(Math.random() * 45) + 1;
+        slot.textContent = r;
+        slot.style.background = colorFor(r);
+      }, 55);
+
+      // 0.9초 굴린 뒤 확정
+      setTimeout(() => {
+        clearInterval(rollTimer);
+        slot.className = 'ball locked';
+        slot.style.background = colorFor(value);
+        slot.textContent = value;
+        resolve();
+      }, 900);
+    });
+  }
+
+  async function draw() {
+    const btn = document.getElementById('drawBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const machine = document.getElementById('machine');
+    const ballsEl = document.getElementById('balls');
+    btn.disabled = true;
+    clearBtn.disabled = true;
+
+    const { main, bonus } = drawNumbers();
+
+    // 추첨기 가동
+    fillSwarm();
+    machine.classList.add('spinning');
+    await sleep(1400);
+
+    // 슬롯 초기화 (본번호 6 + '+' + 보너스 1)
+    ballsEl.innerHTML = '';
+    const slots = [];
+    for (let i = 0; i < 6; i++) {
+      const d = document.createElement('div');
+      d.className = 'placeholder';
+      ballsEl.appendChild(d);
+      slots.push(d);
+    }
+    const plus = document.createElement('span');
+    plus.className = 'plus';
+    plus.textContent = '+';
+    ballsEl.appendChild(plus);
+
+    const bonusWrap = document.createElement('div');
+    bonusWrap.className = 'bonus-wrap';
+    const bonusSlot = document.createElement('div');
+    bonusSlot.className = 'placeholder';
+    const bonusLabel = document.createElement('span');
+    bonusLabel.className = 'bonus-label';
+    bonusLabel.textContent = '보너스';
+    bonusWrap.appendChild(bonusSlot);
+    bonusWrap.appendChild(bonusLabel);
+    ballsEl.appendChild(bonusWrap);
+
+    // 본번호 하나씩 추첨
+    for (let i = 0; i < 6; i++) {
+      await revealBall(slots[i], main[i]);
+      await sleep(250);
+    }
+
+    // 보너스 번호 추첨
+    await sleep(300);
+    await revealBall(bonusSlot, bonus);
+
+    // 마무리
+    machine.classList.remove('spinning');
+    addHistory(main, bonus);
+    btn.disabled = false;
+    clearBtn.disabled = false;
+    btn.textContent = '다시 추첨';
+  }
+
+  function addHistory(main, bonus) {
+    count++;
+    const h = document.getElementById('history');
+    const empty = document.getElementById('historyEmpty');
+    if (empty) empty.remove();
+
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    let html = `<span class="idx">#${count}</span>`;
+    main.forEach(n => {
+      html += `<span class="mini" style="background:${colorFor(n)}">${n}</span>`;
+    });
+    html += `<span class="mini-plus">+</span>`;
+    html += `<span class="mini" style="background:${colorFor(bonus)}">${bonus}</span>`;
+    item.innerHTML = html;
+    h.insertBefore(item, h.firstChild);
+  }
+
+  function clearHistory() {
+    count = 0;
+    const h = document.getElementById('history');
+    h.innerHTML = '<p class="history-empty" id="historyEmpty">아직 추첨 기록이 없습니다.</p>';
+  }
+</script>
+</body>
+</html>
