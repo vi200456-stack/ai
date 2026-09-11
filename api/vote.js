@@ -1,7 +1,9 @@
 // Vercel Serverless Function — 돈까스 제품명 투표
 // 환경변수: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (둘 다 필수)
+//           ADMIN_KEY (선택) — 설정하면 ?key=<ADMIN_KEY> 로 요청 시 투표자 이름까지 반환(관리자 전용)
 //
-//  GET  /api/vote            → 현재 집계 결과 반환 (실시간)
+//  GET  /api/vote            → 현재 집계(순위) 반환. 이름은 미포함(일반 사용자)
+//  GET  /api/vote?key=...    → key 가 ADMIN_KEY 와 일치하면 투표자 이름 목록도 포함
 //  POST /api/vote            → 투표 저장. body: { voterName, choice }
 //                              같은 이름이 이미 투표했으면 409 반환(변경 불가)
 
@@ -25,8 +27,13 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const tally = await getTally(url, key);
-      return res.status(200).json(tally);
+      // 관리자 키가 일치할 때만 투표자 이름을 포함
+      const adminKey = process.env.ADMIN_KEY;
+      const providedKey = getQueryParam(req, 'key');
+      const isAdmin = !!adminKey && providedKey === adminKey;
+
+      const tally = await getTally(url, key, isAdmin);
+      return res.status(200).json({ ...tally, admin: isAdmin });
     }
 
     if (req.method === 'POST') {
@@ -81,8 +88,9 @@ export default async function handler(req, res) {
   }
 }
 
-// 전체 투표를 읽어 후보별 카운트 + 최근 투표자 목록으로 집계
-async function getTally(url, key) {
+// 전체 투표를 읽어 후보별 카운트로 집계.
+// includeVoters=true(관리자)일 때만 투표자 이름 목록을 함께 반환한다.
+async function getTally(url, key, includeVoters) {
   const res = await fetch(
     `${url}/rest/v1/cutlet_votes?select=choice,voter_name,created_at&order=created_at.desc`,
     {
@@ -105,12 +113,31 @@ async function getTally(url, key) {
     if (c >= 1 && c <= OPTION_COUNT) counts[c - 1]++;
   }
 
-  const voters = rows.slice(0, 30).map(r => ({
-    name: r.voter_name,
-    choice: Number(r.choice),
-  }));
+  const result = { counts, total: rows.length };
 
-  return { counts, total: rows.length, voters };
+  // 이름은 관리자에게만 노출 (일반 사용자 응답에는 포함하지 않음)
+  if (includeVoters) {
+    result.voters = rows.map(r => ({
+      name: r.voter_name,
+      choice: Number(r.choice),
+    }));
+  }
+
+  return result;
+}
+
+// 쿼리스트링에서 값 하나를 안전하게 추출 (req.query 우선, 없으면 URL 파싱)
+function getQueryParam(req, name) {
+  if (req.query && typeof req.query[name] !== 'undefined') {
+    const v = req.query[name];
+    return Array.isArray(v) ? v[0] : v;
+  }
+  try {
+    const u = new URL(req.url, 'http://localhost');
+    return u.searchParams.get(name) || '';
+  } catch {
+    return '';
+  }
 }
 
 // Supabase(PostgREST) 응답을 사람이 읽을 수 있는 원인 메시지로 변환

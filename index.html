@@ -118,7 +118,13 @@
   .bar-row { margin-bottom: 16px; }
   .bar-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 10px; }
   .bar-name { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
-  .bar-name .num { color: var(--ink-muted); font-size: 13px; margin-right: 4px; font-weight: 400; }
+  .rank {
+    display: inline-block; min-width: 34px; text-align: center;
+    font-size: 12px; font-weight: 700; color: #fff; background: var(--ink-muted);
+    border-radius: 9999px; padding: 2px 8px; margin-right: 8px; vertical-align: middle;
+  }
+  .bar-row.leader .rank { background: var(--primary); }
+  .rank.rank-none { background: transparent; color: var(--ink-muted); font-weight: 400; }
   .bar-val { font-size: 14px; color: var(--ink-muted); white-space: nowrap; }
   .bar-track { height: 26px; background: #f1ece5; border-radius: 8px; overflow: hidden; }
   .bar-fill { height: 100%; background: var(--primary); border-radius: 8px; width: 0%; transition: width 0.5s cubic-bezier(0.16,1,0.3,1); min-width: 2px; }
@@ -129,13 +135,16 @@
     font-weight: 600; vertical-align: middle;
   }
 
-  .voters { margin-top: 26px; }
-  .voters h3 { font-size: 14px; color: var(--ink-muted); margin-bottom: 12px; font-weight: 600; }
+  .voters { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--hairline); }
+  .voters h3 { font-size: 14px; color: var(--ink); margin-bottom: 12px; font-weight: 600; }
+  .admin-tag { font-size: 11px; color: var(--primary); background: #fff1e3; border-radius: 6px; padding: 2px 6px; font-weight: 600; margin-left: 4px; }
   .voter-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .voter-chip { background: var(--parchment); border: 1px solid var(--hairline); border-radius: 9999px; padding: 6px 12px; font-size: 13px; letter-spacing: -0.2px; }
   .voter-chip b { font-weight: 600; }
   .voter-chip .c { color: var(--primary); font-weight: 600; }
   .voters-empty { color: var(--ink-muted); font-size: 14px; }
+
+  .admin-banner { background: #fff1e3; border: 1px solid #ffd8ad; color: #7a4b00; border-radius: 12px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; text-align: center; font-weight: 600; }
 
   footer { text-align: center; color: var(--ink-muted); font-size: 12px; margin-top: 28px; letter-spacing: -0.1px; }
 </style>
@@ -161,7 +170,7 @@
 
       <div class="notice">
         <span>⚠️</span>
-        <span><b>한 번 투표를 확인하면 다시 바꿀 수 없습니다.</b> 투표를 확인해야 실시간 결과를 볼 수 있어요.</span>
+        <span><b>한 번 투표를 확인하면 다시 바꿀 수 없습니다.</b> 투표를 확인해야 실시간 결과를 볼 수 있어요. 결과에는 <b>이름이 공개되지 않으며 실시간 순위만</b> 표시됩니다.</span>
       </div>
 
       <button class="btn" id="submitBtn" onclick="submitVote()">투표 확인하기</button>
@@ -176,9 +185,9 @@
       <div class="total" id="totalLine">집계 중...</div>
       <div id="bars"></div>
 
-      <div class="voters">
-        <h3>참여자</h3>
-        <div class="voter-list" id="voterList"><span class="voters-empty">아직 참여자가 없습니다.</span></div>
+      <div class="voters" id="votersBox" hidden>
+        <h3>🔒 참여자 명단 <span class="admin-tag">관리자 전용</span></h3>
+        <div class="voter-list" id="voterList"></div>
       </div>
     </div>
 
@@ -188,7 +197,7 @@
 <script>
   // api/vote.js 의 OPTION_COUNT 와 개수가 일치해야 합니다.
   const OPTIONS = [
-    '통등심 바삭 돈까스',
+    '등심 바삭 돈까스',
     '두툼한 등심 돈까스',
     '육즙가득 등심 돈까스',
     '골든크리스피 등심 돈까스',
@@ -196,9 +205,16 @@
   ];
 
   const STORAGE_KEY = 'cutlet_vote_v1';
+  // 관리자 키: 주소에 ?key=... 가 있으면 관리자로 간주 (서버가 실제 검증)
+  const ADMIN_KEY = new URLSearchParams(location.search).get('key') || '';
   let selected = null;
   let myChoice = null;
   let pollTimer = null;
+
+  // GET 요청 URL (관리자면 key 붙여서 이름까지 받아옴)
+  function tallyUrl() {
+    return '/api/vote' + (ADMIN_KEY ? ('?key=' + encodeURIComponent(ADMIN_KEY)) : '');
+  }
 
   const optionsEl = document.getElementById('options');
   OPTIONS.forEach((name, i) => {
@@ -292,40 +308,59 @@
     const counts = data.counts || Array(OPTIONS.length).fill(0);
     const total = data.total || 0;
     const max = Math.max(1, ...counts);
-    const leaderIdx = total > 0 ? counts.indexOf(Math.max(...counts)) : -1;
 
     document.getElementById('totalLine').textContent = '총 ' + total + '표';
 
+    // 득표순으로 정렬 (동점은 원래 순서 유지)
+    const ranked = OPTIONS.map((name, i) => ({ name, choice: i + 1, count: counts[i] }))
+      .sort((a, b) => b.count - a.count || a.choice - b.choice);
+
+    // 동점은 같은 등수로 계산
+    let lastCount = null, lastRank = 0;
+    ranked.forEach((r, idx) => {
+      if (r.count !== lastCount) { lastRank = idx + 1; lastCount = r.count; }
+      r.rank = total > 0 ? lastRank : null;
+    });
+
     const bars = document.getElementById('bars');
     bars.innerHTML = '';
-    OPTIONS.forEach((name, i) => {
-      const c = counts[i];
-      const pct = total > 0 ? Math.round((c / total) * 100) : 0;
-      const widthPct = (c / max) * 100;
+    ranked.forEach(r => {
+      const pct = total > 0 ? Math.round((r.count / total) * 100) : 0;
+      const widthPct = (r.count / max) * 100;
 
       const row = document.createElement('div');
       row.className = 'bar-row';
-      if (i === leaderIdx && total > 0) row.classList.add('leader');
-      if (i + 1 === myChoice) row.classList.add('mychoice');
+      if (r.rank === 1 && total > 0) row.classList.add('leader');
+      if (r.choice === myChoice) row.classList.add('mychoice');
+
+      const rankBadge = r.rank ? '<span class="rank">' + r.rank + '위</span>' : '<span class="rank rank-none">-</span>';
 
       row.innerHTML =
         '<div class="bar-top">' +
-          '<span class="bar-name"><span class="num">' + (i + 1) + '.</span>' + escapeHtml(name) + '</span>' +
-          '<span class="bar-val">' + c + '표 · ' + pct + '%</span>' +
+          '<span class="bar-name">' + rankBadge + escapeHtml(r.name) + '</span>' +
+          '<span class="bar-val">' + r.count + '표 · ' + pct + '%</span>' +
         '</div>' +
         '<div class="bar-track"><div class="bar-fill" style="width:' + widthPct + '%"></div></div>';
       bars.appendChild(row);
     });
 
+    renderVoters(data.voters);
+  }
+
+  // 관리자(서버가 voters를 내려준 경우)에게만 이름 명단 표시
+  function renderVoters(voters) {
+    const box = document.getElementById('votersBox');
+    if (!voters) { box.hidden = true; return; }
+    box.hidden = false;
     const list = document.getElementById('voterList');
-    const voters = data.voters || [];
     if (voters.length === 0) {
       list.innerHTML = '<span class="voters-empty">아직 참여자가 없습니다.</span>';
-    } else {
-      list.innerHTML = voters.map(v =>
-        '<span class="voter-chip"><b>' + escapeHtml(v.name) + '</b> → <span class="c">' + v.choice + '번</span></span>'
-      ).join('');
+      return;
     }
+    list.innerHTML = voters.map(v =>
+      '<span class="voter-chip"><b>' + escapeHtml(v.name) + '</b> → <span class="c">' +
+      (OPTIONS[v.choice - 1] ? escapeHtml(OPTIONS[v.choice - 1]) : (v.choice + '번')) + '</span></span>'
+    ).join('');
   }
 
   function startPolling() {
@@ -336,7 +371,7 @@
 
   async function refresh() {
     try {
-      const res = await fetch('/api/vote', { method: 'GET' });
+      const res = await fetch(tallyUrl(), { method: 'GET' });
       const data = await res.json();
       if (!res.ok) {
         document.getElementById('totalLine').textContent = '⚠️ ' + (data.error || '결과를 불러오지 못했습니다.');
@@ -349,6 +384,16 @@
   }
 
   (function init() {
+    // 관리자 주소(?key=...)로 들어오면 투표 없이 바로 결과+이름 모니터링 화면
+    if (ADMIN_KEY) {
+      const banner = document.createElement('div');
+      banner.className = 'admin-banner';
+      banner.textContent = '🔒 관리자 모드 — 참여자 이름이 표시됩니다';
+      const resultsCard = document.getElementById('results');
+      resultsCard.insertBefore(banner, resultsCard.firstChild);
+      showResults(null);
+      return;
+    }
     const saved = loadLocal();
     if (saved && saved.choice) {
       myChoice = saved.choice;
