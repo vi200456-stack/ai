@@ -15,17 +15,18 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const url = process.env.SUPABASE_URL;
+  const url = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     return res.status(500).json({
-      error: 'SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되지 않았습니다. Vercel 프로젝트 설정에서 추가하세요.',
+      error: 'SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 환경변수가 설정되지 않았습니다. Vercel 프로젝트 설정 → Environment Variables 에서 추가하고 다시 배포하세요.',
     });
   }
 
   try {
     if (req.method === 'GET') {
-      return res.status(200).json(await getTally(url, key));
+      const tally = await getTally(url, key);
+      return res.status(200).json(tally);
     }
 
     if (req.method === 'POST') {
@@ -62,10 +63,8 @@ export default async function handler(req, res) {
       }
       if (!insertRes.ok) {
         const detail = await insertRes.text();
-        return res.status(502).json({
-          error: '투표 저장에 실패했습니다. 잠시 후 다시 시도해주세요.',
-          detail: detail.slice(0, 300),
-        });
+        const diag = diagnose(insertRes.status, detail);
+        return res.status(502).json({ error: diag, detail: detail.slice(0, 300) });
       }
 
       // 저장 성공 → 최신 집계 함께 반환 (확인 후 바로 실시간 결과 표시)
@@ -75,7 +74,10 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'GET 또는 POST 요청만 허용됩니다.' });
   } catch (err) {
-    return res.status(500).json({ error: '서버 오류: ' + (err.message || String(err)) });
+    // getTally 등에서 던진 진단 메시지를 그대로 전달
+    return res.status(502).json({
+      error: err.message || '서버 오류가 발생했습니다.',
+    });
   }
 }
 
@@ -93,7 +95,7 @@ async function getTally(url, key) {
 
   if (!res.ok) {
     const detail = await res.text();
-    throw new Error(`집계 조회 실패 (${res.status}): ${detail.slice(0, 200)}`);
+    throw new Error(diagnose(res.status, detail));
   }
 
   const rows = await res.json();
@@ -109,4 +111,27 @@ async function getTally(url, key) {
   }));
 
   return { counts, total: rows.length, voters };
+}
+
+// Supabase(PostgREST) 응답을 사람이 읽을 수 있는 원인 메시지로 변환
+function diagnose(status, detail) {
+  const d = (detail || '').toLowerCase();
+
+  // 테이블 없음: 스키마 미실행
+  if (
+    d.includes('does not exist') ||
+    d.includes('could not find the table') ||
+    d.includes('schema cache') ||
+    d.includes('pgrst205') ||
+    d.includes('42p01')
+  ) {
+    return "'cutlet_votes' 테이블이 없습니다. Supabase 대시보드 → SQL Editor 에서 supabase/schema.sql 을 실행해 테이블을 먼저 만드세요.";
+  }
+
+  // 인증 실패: URL 또는 서비스 키가 잘못됨
+  if (status === 401 || status === 403 || d.includes('jwt') || d.includes('api key') || d.includes('invalid')) {
+    return 'Supabase 인증에 실패했습니다. SUPABASE_URL 과 SUPABASE_SERVICE_ROLE_KEY(service_role 키) 값이 올바른지 확인하세요.';
+  }
+
+  return `Supabase 요청 실패 (${status}). 잠시 후 다시 시도하거나 설정을 확인하세요.`;
 }
