@@ -3,682 +3,218 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FL7ZX62JVX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-FL7ZX62JVX');
-</script>
-<title>로또 추첨기</title>
+<title>돈까스 제품명 투표</title>
 <style>
   :root {
-    /* Colors */
-    --primary: #0066cc;
-    --primary-focus: #0071e3;
-    --primary-on-dark: #2997ff;
+    --primary: #d2691e;
+    --primary-dark: #b4560f;
     --ink: #1d1d1f;
-    --ink-muted-80: #333333;
-    --ink-muted-48: #7a7a7a;
-    --body-on-dark: #ffffff;
-    --body-muted: #cccccc;
+    --ink-muted: #6e6e73;
     --canvas: #ffffff;
-    --parchment: #f5f5f7;
-    --surface-pearl: #fafafc;
-    --tile-dark: #272729;
-    --hairline: #e0e0e0;
-    --divider-soft: #f0f0f0;
-
-    /* Fonts */
-    --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-text: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-
-    /* The single system shadow — product objects only */
-    --product-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
+    --parchment: #faf6f1;
+    --hairline: #e8e2da;
+    --leader: #ffbf47;
+    --danger: #c0392b;
+    --shadow: rgba(80, 50, 20, 0.10) 0 6px 24px 0;
+    --font: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { -webkit-font-smoothing: antialiased; }
-
   body {
-    font-family: var(--font-text);
-    background: var(--canvas);
+    font-family: var(--font);
+    background: var(--parchment);
     color: var(--ink);
     min-height: 100vh;
+    line-height: 1.4;
   }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 32px 20px 64px; }
 
-  /* ---- Global nav ---- */
-  .global-nav {
-    background: #000;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--body-on-dark);
-    font-size: 12px;
-    letter-spacing: -0.12px;
-  }
+  header { text-align: center; margin-bottom: 28px; }
+  header .emoji { font-size: 44px; }
+  header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.4px; margin-top: 8px; }
+  header p { margin-top: 8px; color: var(--ink-muted); font-size: 15px; letter-spacing: -0.2px; }
 
-  /* ---- Hero tile ---- */
-  .hero {
-    background: var(--parchment);
-    text-align: center;
-    padding: 80px 24px 64px;
-  }
-  .hero h1 {
-    font-family: var(--font-display);
-    font-size: 56px;
-    font-weight: 600;
-    line-height: 1.07;
-    letter-spacing: -0.28px;
-    color: var(--ink);
-  }
-  .hero p {
-    margin-top: 17px;
-    font-family: var(--font-display);
-    font-size: 28px;
-    font-weight: 400;
-    line-height: 1.14;
-    letter-spacing: 0.196px;
-    color: var(--ink-muted-80);
-  }
-
-  /* ---- Draw tile ---- */
-  .draw-tile {
-    background: var(--canvas);
-    text-align: center;
-    padding: 56px 24px 72px;
-  }
-
-  /* Drawing machine dome */
-  .machine {
-    max-width: 520px;
-    margin: 0 auto 40px;
-    aspect-ratio: 16 / 10;
-    border-radius: 9999px 9999px 24px 24px;
-    background: radial-gradient(circle at 50% 38%, #ffffff 0%, #f0f0f2 55%, #e6e6ea 100%);
-    border: 1px solid var(--hairline);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .machine.spinning .swarm { animation-play-state: running; opacity: 1; }
-  .swarm {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-  }
-  .swarm span {
-    position: absolute;
-    width: 34px; height: 34px;
-    border-radius: 9999px;
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: 15px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: rgba(0,0,0,0.15) 1px 2px 8px 0;
-  }
-  @keyframes float1 { 0%{transform:translate(20px,180px)} 25%{transform:translate(120px,40px)} 50%{transform:translate(230px,150px)} 75%{transform:translate(150px,60px)} 100%{transform:translate(20px,180px)} }
-  @keyframes float2 { 0%{transform:translate(300px,60px)} 25%{transform:translate(180px,170px)} 50%{transform:translate(60px,50px)} 75%{transform:translate(240px,120px)} 100%{transform:translate(300px,60px)} }
-  @keyframes float3 { 0%{transform:translate(150px,30px)} 25%{transform:translate(40px,120px)} 50%{transform:translate(280px,180px)} 75%{transform:translate(120px,90px)} 100%{transform:translate(150px,30px)} }
-  @keyframes float4 { 0%{transform:translate(260px,190px)} 25%{transform:translate(220px,50px)} 50%{transform:translate(90px,160px)} 75%{transform:translate(30px,70px)} 100%{transform:translate(260px,190px)} }
-  @keyframes float5 { 0%{transform:translate(90px,90px)} 25%{transform:translate(280px,100px)} 50%{transform:translate(160px,200px)} 75%{transform:translate(60px,140px)} 100%{transform:translate(90px,90px)} }
-
-  .machine-label {
-    position: relative;
-    z-index: 2;
-    font-family: var(--font-display);
-    font-size: 21px;
-    font-weight: 600;
-    letter-spacing: 0.231px;
-    color: var(--ink-muted-48);
-    transition: opacity 0.3s ease;
-  }
-  .machine.spinning .machine-label { opacity: 0; }
-
-  /* Drawn result balls */
-  .balls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-    align-items: center;
-    min-height: 84px;
-    margin-bottom: 44px;
-  }
-  .ball, .placeholder {
-    width: 84px; height: 84px;
-    border-radius: 9999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .placeholder {
-    background: var(--parchment);
-    border: 1px solid var(--hairline);
-  }
-  .ball {
-    font-family: var(--font-display);
-    font-size: 34px;
-    font-weight: 600;
-    letter-spacing: -0.374px;
-    color: var(--body-on-dark);
-    box-shadow: var(--product-shadow);
-  }
-  .ball.rolling { animation: shake 0.35s linear infinite; }
-  @keyframes shake {
-    0%,100% { transform: translateY(0) rotate(0); }
-    25% { transform: translateY(-3px) rotate(-6deg); }
-    75% { transform: translateY(3px) rotate(6deg); }
-  }
-  .ball.locked { animation: pop 0.4s cubic-bezier(0.16,1,0.3,1) both; }
-  @keyframes pop {
-    0% { transform: scale(1.25); }
-    60% { transform: scale(0.94); }
-    100% { transform: scale(1); }
-  }
-
-  .plus {
-    font-family: var(--font-display);
-    font-size: 40px;
-    font-weight: 400;
-    color: var(--ink-muted-48);
-    line-height: 84px;
-  }
-  .bonus-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .bonus-label {
-    font-size: 12px;
-    letter-spacing: -0.12px;
-    color: var(--ink-muted-48);
-  }
-
-  /* ---- Buttons ---- */
-  .btn-primary {
-    background: var(--primary);
-    color: #fff; border: none;
-    font-family: var(--font-text);
-    font-size: 17px; font-weight: 400;
-    letter-spacing: -0.374px; line-height: 1;
-    border-radius: 9999px; padding: 14px 28px;
-    cursor: pointer; transition: transform 0.12s ease;
-  }
-  .btn-primary:active { transform: scale(0.95); }
-  .btn-primary:focus-visible { outline: 2px solid var(--primary-focus); outline-offset: 2px; }
-  .btn-primary:disabled { opacity: 0.5; cursor: default; transform: none; }
-
-  .btn-secondary {
-    background: transparent; color: var(--primary);
-    border: 1px solid var(--primary);
-    font-family: var(--font-text);
-    font-size: 17px; font-weight: 400;
-    letter-spacing: -0.374px; line-height: 1;
-    border-radius: 9999px; padding: 13px 27px;
-    cursor: pointer; transition: transform 0.12s ease;
-  }
-  .btn-secondary:active { transform: scale(0.95); }
-  .btn-secondary:focus-visible { outline: 2px solid var(--primary-focus); outline-offset: 2px; }
-  .btn-secondary:disabled { opacity: 0.4; cursor: default; }
-
-  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-
-  /* ---- History tile ---- */
-  .history-tile {
-    background: var(--tile-dark);
-    color: var(--body-on-dark);
-    padding: 64px 24px 80px;
-  }
-  .history-inner { max-width: 680px; margin: 0 auto; }
-  .history-tile h2 {
-    font-family: var(--font-display);
-    font-size: 40px; font-weight: 600;
-    line-height: 1.1; text-align: center; margin-bottom: 8px;
-  }
-  .history-tile .sub {
-    text-align: center; color: var(--body-muted);
-    font-size: 17px; letter-spacing: -0.374px; margin-bottom: 40px;
-  }
-  .history-list { display: flex; flex-direction: column; gap: 16px; }
-  .history-empty {
-    text-align: center; color: var(--ink-muted-48);
-    font-size: 17px; letter-spacing: -0.374px;
-  }
-  .history-item {
-    display: flex; align-items: center; gap: 10px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    flex-wrap: wrap;
-  }
-  .history-item .idx {
-    color: var(--body-muted);
-    font-size: 14px; letter-spacing: -0.224px;
-    width: 36px; flex-shrink: 0;
-  }
-  .mini {
-    width: 34px; height: 34px;
-    border-radius: 9999px;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 600; color: #fff; flex-shrink: 0;
-  }
-  .mini-plus { color: var(--body-muted); font-size: 20px; padding: 0 2px; }
-
-  /* ---- Saju tile (parchment) ---- */
-  .saju-tile {
-    background: var(--parchment);
-    padding: 72px 24px 80px;
-  }
-  .saju-inner { max-width: 640px; margin: 0 auto; }
-  .saju-tile h2 {
-    font-family: var(--font-display);
-    font-size: 40px; font-weight: 600;
-    line-height: 1.1; text-align: center; margin-bottom: 8px;
-    color: var(--ink);
-  }
-  .saju-tile .sub {
-    text-align: center; color: var(--ink-muted-80);
-    font-size: 17px; letter-spacing: -0.374px; margin-bottom: 40px;
-  }
-
-  /* Input card */
-  .saju-form {
+  .card {
     background: var(--canvas);
     border: 1px solid var(--hairline);
-    border-radius: 18px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: var(--shadow);
   }
-  .field { display: flex; flex-direction: column; gap: 8px; }
-  .field label {
-    font-size: 14px; font-weight: 600;
-    letter-spacing: -0.224px; color: var(--ink);
-  }
-  .field input[type="date"],
-  .field input[type="time"] {
-    font-family: var(--font-text);
-    font-size: 17px; letter-spacing: -0.374px;
-    color: var(--ink);
-    border: 1px solid var(--hairline);
-    border-radius: 11px;
-    padding: 12px 14px;
-    background: var(--canvas);
+
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.2px; }
+  .field input[type="text"] {
     width: 100%;
-  }
-  .field input:focus { outline: 2px solid var(--primary-focus); outline-offset: 0; border-color: transparent; }
-  .field.disabled input { opacity: 0.4; pointer-events: none; }
-
-  .segmented { display: flex; gap: 8px; flex-wrap: wrap; }
-  .seg-btn {
-    flex: 1; min-width: 72px;
-    font-family: var(--font-text);
-    font-size: 15px; letter-spacing: -0.224px;
+    font-family: var(--font); font-size: 17px; letter-spacing: -0.3px;
     color: var(--ink);
-    background: var(--canvas);
     border: 1px solid var(--hairline);
-    border-radius: 9999px;
-    padding: 10px 16px;
-    cursor: pointer;
-    transition: transform 0.12s ease;
-  }
-  .seg-btn:active { transform: scale(0.95); }
-  .seg-btn.active {
-    border-color: var(--primary);
-    color: var(--primary);
-    box-shadow: inset 0 0 0 1px var(--primary);
-  }
-
-  .checkbox-row {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 14px; letter-spacing: -0.224px; color: var(--ink-muted-80);
-    cursor: pointer;
-  }
-  .checkbox-row input { width: 16px; height: 16px; accent-color: var(--primary); }
-
-  .saju-form .btn-primary { align-self: stretch; margin-top: 4px; }
-
-  /* Chat / result area */
-  .saju-chat { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
-  .bubble {
+    border-radius: 12px;
+    padding: 13px 14px;
     background: var(--canvas);
-    border: 1px solid var(--hairline);
-    border-radius: 18px;
-    padding: 20px 22px;
-    animation: rise 0.4s cubic-bezier(0.16,1,0.3,1) both;
   }
-  @keyframes rise {
-    0% { transform: translateY(12px); opacity: 0; }
-    100% { transform: translateY(0); opacity: 1; }
-  }
-  .bubble .who {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 14px; font-weight: 600; letter-spacing: -0.224px;
-    color: var(--ink); margin-bottom: 12px;
-  }
-  .bubble .avatar {
-    width: 28px; height: 28px; border-radius: 9999px;
-    background: var(--primary); color: #fff;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 15px;
-  }
-  .bubble p { font-size: 17px; line-height: 1.47; letter-spacing: -0.374px; color: var(--ink-muted-80); margin-bottom: 12px; }
-  .bubble p:last-child { margin-bottom: 0; }
-  .bubble .summary {
-    font-family: var(--font-display);
-    font-size: 21px; font-weight: 600; letter-spacing: 0.231px;
-    color: var(--ink); margin-bottom: 16px;
-  }
-  .bubble .rec-balls {
-    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-    margin: 16px 0;
-  }
-  .bubble .rec-ball {
-    width: 52px; height: 52px; border-radius: 9999px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display);
-    font-size: 21px; font-weight: 600; color: #fff;
-    box-shadow: var(--product-shadow);
-  }
-  .bubble .rec-plus { font-size: 24px; color: var(--ink-muted-48); }
-  .bubble .reason { font-size: 14px; line-height: 1.5; color: var(--ink-muted-48); letter-spacing: -0.224px; }
+  .field input[type="text"]:focus { outline: 2px solid var(--primary); outline-offset: 0; border-color: transparent; }
 
-  .loading-bubble { display: flex; align-items: center; gap: 10px; color: var(--ink-muted-48); font-size: 17px; letter-spacing: -0.374px; }
-  .dots span {
-    display: inline-block; width: 7px; height: 7px; border-radius: 9999px;
-    background: var(--ink-muted-48); margin: 0 2px;
-    animation: blink 1.2s infinite both;
+  .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .opt {
+    display: flex; align-items: center; gap: 12px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+    background: var(--canvas);
+    text-align: left;
+    width: 100%;
+    font-family: var(--font);
   }
-  .dots span:nth-child(2) { animation-delay: 0.2s; }
-  .dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes blink { 0%,80%,100% { opacity: 0.2; } 40% { opacity: 1; } }
+  .opt:active { transform: scale(0.99); }
+  .opt .radio {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--hairline);
+    flex-shrink: 0; position: relative;
+    transition: border-color 0.15s ease;
+  }
+  .opt.selected { border-color: var(--primary); background: #fff8f1; }
+  .opt.selected .radio { border-color: var(--primary); }
+  .opt.selected .radio::after { content: ''; position: absolute; inset: 4px; background: var(--primary); border-radius: 50%; }
+  .opt .name { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  .opt .num { color: var(--ink-muted); font-size: 13px; margin-right: 2px; }
 
-  .error-bubble { border-color: #ff7272; color: #c0392b; font-size: 15px; letter-spacing: -0.224px; white-space: pre-wrap; word-break: break-word; }
-
-  /* ---- Footer ---- */
-  footer {
-    background: var(--parchment);
-    color: var(--ink-muted-48);
-    text-align: center; padding: 32px 24px;
-    font-size: 12px; letter-spacing: -0.12px; line-height: 1.3;
+  .notice {
+    display: flex; gap: 8px; align-items: flex-start;
+    background: #fff4e6; border: 1px solid #ffdca8;
+    border-radius: 12px; padding: 12px 14px;
+    font-size: 13.5px; color: #7a4b00; letter-spacing: -0.2px;
+    margin-bottom: 18px; line-height: 1.5;
   }
 
-  @media (max-width: 640px) {
-    .hero { padding: 48px 20px; }
-    .hero h1 { font-size: 34px; }
-    .hero p { font-size: 21px; }
-    .ball, .placeholder { width: 60px; height: 60px; }
-    .ball { font-size: 24px; }
-    .plus { font-size: 28px; line-height: 60px; }
-    .balls { gap: 10px; }
-    .history-tile h2 { font-size: 28px; }
+  .btn {
+    width: 100%;
+    background: var(--primary); color: #fff; border: none;
+    font-family: var(--font); font-size: 17px; font-weight: 600;
+    letter-spacing: -0.3px;
+    border-radius: 9999px; padding: 15px;
+    cursor: pointer; transition: transform 0.1s ease, background 0.15s ease;
   }
+  .btn:hover { background: var(--primary-dark); }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+  .err { color: var(--danger); font-size: 14px; margin-top: 12px; text-align: center; letter-spacing: -0.2px; white-space: pre-wrap; }
+
+  .results { display: none; }
+  .results.show { display: block; }
+  .form-view.hide { display: none; }
+
+  .result-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+  .result-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .live { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-muted); font-weight: 600; }
+  .live .dot { width: 8px; height: 8px; border-radius: 50%; background: #34c759; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .total { color: var(--ink-muted); font-size: 14px; margin-bottom: 20px; }
+
+  .bar-row { margin-bottom: 16px; }
+  .bar-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 10px; }
+  .bar-name { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+  .bar-name .num { color: var(--ink-muted); font-size: 13px; margin-right: 4px; font-weight: 400; }
+  .bar-val { font-size: 14px; color: var(--ink-muted); white-space: nowrap; }
+  .bar-track { height: 26px; background: #f1ece5; border-radius: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--primary); border-radius: 8px; width: 0%; transition: width 0.5s cubic-bezier(0.16,1,0.3,1); min-width: 2px; }
+  .bar-row.leader .bar-fill { background: linear-gradient(90deg, var(--primary), var(--leader)); }
+  .bar-row.mychoice .bar-name::after {
+    content: '내 선택'; font-size: 11px; color: var(--primary);
+    background: #fff1e3; border-radius: 6px; padding: 2px 6px; margin-left: 6px;
+    font-weight: 600; vertical-align: middle;
+  }
+
+  .voters { margin-top: 26px; }
+  .voters h3 { font-size: 14px; color: var(--ink-muted); margin-bottom: 12px; font-weight: 600; }
+  .voter-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .voter-chip { background: var(--parchment); border: 1px solid var(--hairline); border-radius: 9999px; padding: 6px 12px; font-size: 13px; letter-spacing: -0.2px; }
+  .voter-chip b { font-weight: 600; }
+  .voter-chip .c { color: var(--primary); font-weight: 600; }
+  .voters-empty { color: var(--ink-muted); font-size: 14px; }
+
+  footer { text-align: center; color: var(--ink-muted); font-size: 12px; margin-top: 28px; letter-spacing: -0.1px; }
 </style>
 </head>
 <body>
-  <nav class="global-nav">🍎 로또 6/45</nav>
+  <div class="wrap">
+    <header>
+      <div class="emoji">🍽️</div>
+      <h1>돈까스 제품명 투표</h1>
+      <p>어떤 이름이 가장 끌리나요? 하나만 골라주세요.</p>
+    </header>
 
-  <section class="hero">
-    <h1>로또 추첨기</h1>
-    <p>본번호 6개 + 보너스 1개.</p>
-  </section>
-
-  <section class="draw-tile">
-    <div class="machine" id="machine">
-      <div class="swarm" id="swarm"></div>
-      <span class="machine-label">추첨 대기</span>
-    </div>
-
-    <div class="balls" id="balls">
-      <div class="placeholder"></div>
-      <div class="placeholder"></div>
-      <div class="placeholder"></div>
-      <div class="placeholder"></div>
-      <div class="placeholder"></div>
-      <div class="placeholder"></div>
-      <span class="plus">+</span>
-      <div class="placeholder"></div>
-    </div>
-
-    <div class="actions">
-      <button class="btn-primary" id="drawBtn" onclick="draw()">추첨 시작</button>
-      <button class="btn-secondary" id="clearBtn" onclick="clearHistory()">기록 지우기</button>
-    </div>
-  </section>
-
-  <section class="saju-tile">
-    <div class="saju-inner">
-      <h2>사주 번호 추천</h2>
-      <p class="sub">생년월일과 태어난 시간을 입력하면 AI가 사주를 풀어 번호를 추천해요.</p>
-
-      <div class="saju-form">
-        <div class="field">
-          <label for="birthDate">생년월일</label>
-          <input type="date" id="birthDate">
-        </div>
-
-        <div class="field">
-          <label>양력 / 음력</label>
-          <div class="segmented" id="calendarSeg">
-            <button type="button" class="seg-btn active" data-value="solar">양력</button>
-            <button type="button" class="seg-btn" data-value="lunar">음력</button>
-          </div>
-        </div>
-
-        <div class="field" id="timeField">
-          <label for="birthTime">태어난 시간</label>
-          <input type="time" id="birthTime">
-        </div>
-        <label class="checkbox-row">
-          <input type="checkbox" id="timeUnknown"> 태어난 시간을 몰라요
-        </label>
-
-        <div class="field">
-          <label>성별</label>
-          <div class="segmented" id="genderSeg">
-            <button type="button" class="seg-btn active" data-value="male">남성</button>
-            <button type="button" class="seg-btn" data-value="female">여성</button>
-          </div>
-        </div>
-
-        <button class="btn-primary" id="sajuBtn" onclick="analyzeSaju()">사주 분석하고 번호 받기</button>
+    <div class="card form-view" id="formView">
+      <div class="field">
+        <label for="voterName">이름</label>
+        <input type="text" id="voterName" placeholder="투표자 이름을 입력하세요" maxlength="40" autocomplete="off">
       </div>
 
-      <div class="saju-chat" id="sajuChat"></div>
-    </div>
-  </section>
+      <div class="field">
+        <label>후보 제품명</label>
+        <div class="options" id="options"></div>
+      </div>
 
-  <section class="history-tile">
-    <div class="history-inner">
-      <h2>추첨 기록</h2>
-      <p class="sub">본번호 6개와 보너스 번호가 함께 기록됩니다.</p>
-      <div class="history-list" id="history">
-        <p class="history-empty" id="historyEmpty">아직 추첨 기록이 없습니다.</p>
+      <div class="notice">
+        <span>⚠️</span>
+        <span><b>한 번 투표를 확인하면 다시 바꿀 수 없습니다.</b> 투표를 확인해야 실시간 결과를 볼 수 있어요.</span>
+      </div>
+
+      <button class="btn" id="submitBtn" onclick="submitVote()">투표 확인하기</button>
+      <div class="err" id="formErr"></div>
+    </div>
+
+    <div class="card results" id="results">
+      <div class="result-head">
+        <h2>실시간 투표 결과</h2>
+        <span class="live"><span class="dot"></span>LIVE</span>
+      </div>
+      <div class="total" id="totalLine">집계 중...</div>
+      <div id="bars"></div>
+
+      <div class="voters">
+        <h3>참여자</h3>
+        <div class="voter-list" id="voterList"><span class="voters-empty">아직 참여자가 없습니다.</span></div>
       </div>
     </div>
-  </section>
 
-  <footer>
-    본 도구는 무작위 번호 생성기이며 당첨을 보장하지 않습니다.
-  </footer>
+    <footer>투표는 이름당 한 번만 가능하며 변경할 수 없습니다.</footer>
+  </div>
 
 <script>
-  let count = 0;
-  const swarmAnims = ['float1','float2','float3','float4','float5'];
+  // api/vote.js 의 OPTION_COUNT 와 개수가 일치해야 합니다.
+  const OPTIONS = [
+    '통등심 바삭 돈까스',
+    '두툼한 등심 돈까스',
+    '육즙가득 등심 돈까스',
+    '골든크리스피 등심 돈까스',
+    '바삭촉촉 등심 돈까스',
+  ];
 
-  function colorFor(n) {
-    if (n <= 10) return '#fbc400';   // 노랑
-    if (n <= 20) return '#69c8f2';   // 파랑
-    if (n <= 30) return '#ff7272';   // 빨강
-    if (n <= 40) return '#3a3a3c';   // 진회색
-    return '#b0d840';                 // 초록
-  }
+  const STORAGE_KEY = 'cutlet_vote_v1';
+  let selected = null;
+  let myChoice = null;
+  let pollTimer = null;
 
-  // 본번호 6개 + 보너스 1개 (총 7개 서로 다른 번호)
-  function drawNumbers() {
-    const pool = Array.from({length: 45}, (_, i) => i + 1);
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-    const main = pool.slice(0, 6).sort((a, b) => a - b);
-    const bonus = pool[6];
-    return { main, bonus };
-  }
-
-  // 추첨기 안을 떠다니는 공 채우기
-  function fillSwarm() {
-    const swarm = document.getElementById('swarm');
-    swarm.innerHTML = '';
-    for (let i = 0; i < 18; i++) {
-      const n = Math.floor(Math.random() * 45) + 1;
-      const s = document.createElement('span');
-      s.textContent = n;
-      s.style.background = colorFor(n);
-      const anim = swarmAnims[i % swarmAnims.length];
-      const dur = (2.5 + Math.random() * 2).toFixed(2);
-      s.style.animation = `${anim} ${dur}s ease-in-out infinite`;
-      s.style.animationDelay = `-${(Math.random() * 3).toFixed(2)}s`;
-      swarm.appendChild(s);
-    }
-  }
-
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-  // 슬롯 하나를 "굴리다가" 최종 번호로 확정
-  function revealBall(slot, value) {
-    return new Promise(resolve => {
-      slot.className = 'ball rolling';
-      slot.style.background = '#c9c9cf';
-      slot.textContent = '?';
-
-      const rollTimer = setInterval(() => {
-        const r = Math.floor(Math.random() * 45) + 1;
-        slot.textContent = r;
-        slot.style.background = colorFor(r);
-      }, 55);
-
-      // 0.9초 굴린 뒤 확정
-      setTimeout(() => {
-        clearInterval(rollTimer);
-        slot.className = 'ball locked';
-        slot.style.background = colorFor(value);
-        slot.textContent = value;
-        resolve();
-      }, 900);
-    });
-  }
-
-  async function draw() {
-    const btn = document.getElementById('drawBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const machine = document.getElementById('machine');
-    const ballsEl = document.getElementById('balls');
-    btn.disabled = true;
-    clearBtn.disabled = true;
-
-    const { main, bonus } = drawNumbers();
-
-    // 추첨기 가동
-    fillSwarm();
-    machine.classList.add('spinning');
-    await sleep(1400);
-
-    // 슬롯 초기화 (본번호 6 + '+' + 보너스 1)
-    ballsEl.innerHTML = '';
-    const slots = [];
-    for (let i = 0; i < 6; i++) {
-      const d = document.createElement('div');
-      d.className = 'placeholder';
-      ballsEl.appendChild(d);
-      slots.push(d);
-    }
-    const plus = document.createElement('span');
-    plus.className = 'plus';
-    plus.textContent = '+';
-    ballsEl.appendChild(plus);
-
-    const bonusWrap = document.createElement('div');
-    bonusWrap.className = 'bonus-wrap';
-    const bonusSlot = document.createElement('div');
-    bonusSlot.className = 'placeholder';
-    const bonusLabel = document.createElement('span');
-    bonusLabel.className = 'bonus-label';
-    bonusLabel.textContent = '보너스';
-    bonusWrap.appendChild(bonusSlot);
-    bonusWrap.appendChild(bonusLabel);
-    ballsEl.appendChild(bonusWrap);
-
-    // 본번호 하나씩 추첨
-    for (let i = 0; i < 6; i++) {
-      await revealBall(slots[i], main[i]);
-      await sleep(250);
-    }
-
-    // 보너스 번호 추첨
-    await sleep(300);
-    await revealBall(bonusSlot, bonus);
-
-    // 마무리
-    machine.classList.remove('spinning');
-    addHistory(main, bonus);
-    btn.disabled = false;
-    clearBtn.disabled = false;
-    btn.textContent = '다시 추첨';
-  }
-
-  function addHistory(main, bonus) {
-    count++;
-    const h = document.getElementById('history');
-    const empty = document.getElementById('historyEmpty');
-    if (empty) empty.remove();
-
-    const item = document.createElement('div');
-    item.className = 'history-item';
-    let html = `<span class="idx">#${count}</span>`;
-    main.forEach(n => {
-      html += `<span class="mini" style="background:${colorFor(n)}">${n}</span>`;
-    });
-    html += `<span class="mini-plus">+</span>`;
-    html += `<span class="mini" style="background:${colorFor(bonus)}">${bonus}</span>`;
-    item.innerHTML = html;
-    h.insertBefore(item, h.firstChild);
-  }
-
-  function clearHistory() {
-    count = 0;
-    const h = document.getElementById('history');
-    h.innerHTML = '<p class="history-empty" id="historyEmpty">아직 추첨 기록이 없습니다.</p>';
-  }
-
-  /* ---------- 사주 챗봇 ---------- */
-
-  // 세그먼트 버튼(양/음, 성별) 토글
-  function setupSegmented(id) {
-    const seg = document.getElementById(id);
-    seg.addEventListener('click', (e) => {
-      const btn = e.target.closest('.seg-btn');
-      if (!btn) return;
-      seg.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    });
-  }
-  setupSegmented('calendarSeg');
-  setupSegmented('genderSeg');
-
-  function segValue(id) {
-    return document.querySelector(`#${id} .seg-btn.active`).dataset.value;
-  }
-
-  // "시간 모름" 체크 시 시간 입력 비활성화
-  document.getElementById('timeUnknown').addEventListener('change', (e) => {
-    document.getElementById('timeField').classList.toggle('disabled', e.target.checked);
+  const optionsEl = document.getElementById('options');
+  OPTIONS.forEach((name, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'opt';
+    btn.innerHTML = '<span class="radio"></span><span class="name"><span class="num">' + (i + 1) + '.</span>' + escapeHtml(name) + '</span>';
+    btn.onclick = () => selectOption(i + 1, btn);
+    optionsEl.appendChild(btn);
   });
+
+  function selectOption(choice, btn) {
+    selected = choice;
+    document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('formErr').textContent = '';
+  }
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({
@@ -686,93 +222,141 @@
     }[c]));
   }
 
-  async function analyzeSaju() {
-    const btn = document.getElementById('sajuBtn');
-    const chat = document.getElementById('sajuChat');
-    const birthDate = document.getElementById('birthDate').value;
-    const timeUnknown = document.getElementById('timeUnknown').checked;
-    const birthTime = document.getElementById('birthTime').value;
+  async function submitVote() {
+    const err = document.getElementById('formErr');
+    const btn = document.getElementById('submitBtn');
+    const voterName = document.getElementById('voterName').value.trim();
+    err.textContent = '';
 
-    if (!birthDate) {
-      showError('생년월일을 입력해주세요.');
+    if (!voterName) { err.textContent = '이름을 입력해주세요.'; return; }
+    if (!selected) { err.textContent = '후보를 하나 선택해주세요.'; return; }
+
+    if (!confirm('"' + OPTIONS[selected - 1] + '"에 투표합니다.\n한 번 확인하면 변경할 수 없습니다. 계속할까요?')) {
       return;
     }
 
-    const payload = {
-      birthDate,
-      birthTime,
-      timeUnknown,
-      gender: segValue('genderSeg'),
-      calendar: segValue('calendarSeg'),
-    };
-
     btn.disabled = true;
-    btn.textContent = '분석 중...';
-
-    // 로딩 버블
-    const loading = document.createElement('div');
-    loading.className = 'bubble loading-bubble';
-    loading.innerHTML = `<span>🔮</span> 사주를 분석하고 있어요 <span class="dots"><span></span><span></span><span></span></span>`;
-    chat.insertBefore(loading, chat.firstChild);
+    btn.textContent = '투표 확인 중...';
 
     try {
-      const res = await fetch('/api/recommend', {
+      const res = await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ voterName, choice: selected }),
       });
       const data = await res.json();
-      loading.remove();
 
+      if (res.status === 409) {
+        err.textContent = data.error || '이미 투표한 이름입니다.';
+        btn.disabled = false;
+        btn.textContent = '투표 확인하기';
+        return;
+      }
       if (!res.ok) {
-        let msg = data.error || '분석에 실패했어요. 잠시 후 다시 시도해주세요.';
-        if (data.detail) msg += '\n\n상세: ' + data.detail;
-        showError(msg);
+        err.textContent = data.error || '투표에 실패했어요. 잠시 후 다시 시도해주세요.';
+        btn.disabled = false;
+        btn.textContent = '투표 확인하기';
         return;
       }
 
-      renderResult(data);
-    } catch (err) {
-      loading.remove();
-      showError('네트워크 오류가 발생했어요. 인터넷 연결을 확인해주세요.');
-    } finally {
+      myChoice = selected;
+      saveLocal(voterName, selected);
+      showResults(data);
+    } catch (e) {
+      err.textContent = '네트워크 오류가 발생했어요. 인터넷 연결을 확인해주세요.';
       btn.disabled = false;
-      btn.textContent = '다시 분석하기';
+      btn.textContent = '투표 확인하기';
     }
   }
 
-  function renderResult(data) {
-    const chat = document.getElementById('sajuChat');
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
+  function saveLocal(name, choice) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, choice })); } catch (e) {}
+  }
 
-    let ballsHtml = '';
-    data.numbers.forEach(n => {
-      ballsHtml += `<span class="rec-ball" style="background:${colorFor(n)}">${n}</span>`;
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function showResults(data) {
+    document.getElementById('formView').classList.add('hide');
+    document.getElementById('results').classList.add('show');
+    if (data) renderTally(data);
+    startPolling();
+  }
+
+  function renderTally(data) {
+    const counts = data.counts || Array(OPTIONS.length).fill(0);
+    const total = data.total || 0;
+    const max = Math.max(1, ...counts);
+    const leaderIdx = total > 0 ? counts.indexOf(Math.max(...counts)) : -1;
+
+    document.getElementById('totalLine').textContent = '총 ' + total + '표';
+
+    const bars = document.getElementById('bars');
+    bars.innerHTML = '';
+    OPTIONS.forEach((name, i) => {
+      const c = counts[i];
+      const pct = total > 0 ? Math.round((c / total) * 100) : 0;
+      const widthPct = (c / max) * 100;
+
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      if (i === leaderIdx && total > 0) row.classList.add('leader');
+      if (i + 1 === myChoice) row.classList.add('mychoice');
+
+      row.innerHTML =
+        '<div class="bar-top">' +
+          '<span class="bar-name"><span class="num">' + (i + 1) + '.</span>' + escapeHtml(name) + '</span>' +
+          '<span class="bar-val">' + c + '표 · ' + pct + '%</span>' +
+        '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + widthPct + '%"></div></div>';
+      bars.appendChild(row);
     });
-    ballsHtml += `<span class="rec-plus">+</span>`;
-    ballsHtml += `<span class="rec-ball" style="background:${colorFor(data.bonus)}">${data.bonus}</span>`;
 
-    bubble.innerHTML = `
-      <div class="who"><span class="avatar">🔮</span> 사주 도우미</div>
-      ${data.summary ? `<div class="summary">${escapeHtml(data.summary)}</div>` : ''}
-      ${data.saju ? `<p>${escapeHtml(data.saju)}</p>` : ''}
-      <div class="rec-balls">${ballsHtml}</div>
-      ${data.reason ? `<p class="reason">${escapeHtml(data.reason)}</p>` : ''}
-    `;
-    chat.insertBefore(bubble, chat.firstChild);
-
-    // 추첨 기록에도 저장
-    addHistory(data.numbers, data.bonus);
+    const list = document.getElementById('voterList');
+    const voters = data.voters || [];
+    if (voters.length === 0) {
+      list.innerHTML = '<span class="voters-empty">아직 참여자가 없습니다.</span>';
+    } else {
+      list.innerHTML = voters.map(v =>
+        '<span class="voter-chip"><b>' + escapeHtml(v.name) + '</b> → <span class="c">' + v.choice + '번</span></span>'
+      ).join('');
+    }
   }
 
-  function showError(msg) {
-    const chat = document.getElementById('sajuChat');
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble error-bubble';
-    bubble.textContent = '⚠️ ' + msg;
-    chat.insertBefore(bubble, chat.firstChild);
+  function startPolling() {
+    refresh();
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(refresh, 4000);
   }
+
+  async function refresh() {
+    try {
+      const res = await fetch('/api/vote', { method: 'GET' });
+      if (!res.ok) return;
+      const data = await res.json();
+      renderTally(data);
+    } catch (e) {}
+  }
+
+  (function init() {
+    const saved = loadLocal();
+    if (saved && saved.choice) {
+      myChoice = saved.choice;
+      showResults(null);
+    }
+  })();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    } else if (document.getElementById('results').classList.contains('show')) {
+      startPolling();
+    }
+  });
 </script>
 </body>
 </html>
