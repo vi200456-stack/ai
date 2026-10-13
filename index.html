@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>돈까스 제품명 투표</title>
+<title>오징어튀김 제품명 투표</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%BD%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <style>
   :root {
@@ -153,7 +153,7 @@
   <div class="wrap">
     <header>
       <div class="emoji">🍽️</div>
-      <h1>돈까스 제품명 투표</h1>
+      <h1>오징어튀김 제품명 투표</h1>
       <p>어떤 이름이 가장 끌리나요? 하나만 골라주세요.</p>
     </header>
 
@@ -197,14 +197,14 @@
 <script>
   // api/vote.js 의 OPTION_COUNT 와 개수가 일치해야 합니다.
   const OPTIONS = [
-    '등심 바삭 돈까스',
-    '두툼한 등심 돈까스',
-    '육즙가득 등심 돈까스',
-    '골든크리스피 등심 돈까스',
-    '바삭촉촉 등심 돈까스',
+    '바삭한입 오징어스틱',
+    '바삭쫄깃 오징어튀김',
+    '실속 오징어튀김',
+    '노릇노릇 오징어튀김',
+    '황금바삭 오징어튀김',
   ];
 
-  const STORAGE_KEY = 'cutlet_vote_v2';
+  const STORAGE_KEY = 'squid_vote_v1';
   // 관리자 키: 주소에 ?key=... 가 있으면 관리자로 간주 (서버가 실제 검증)
   const ADMIN_KEY = new URLSearchParams(location.search).get('key') || '';
   let selected = null;
