@@ -51,7 +51,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: '올바른 후보를 선택해주세요.' });
       }
 
-      const insertRes = await fetch(`${url}/rest/v1/cutlet_votes`, {
+      const insertRes = await fetch(`${url}/rest/v1/squid_votes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ export default async function handler(req, res) {
 // includeVoters=true(관리자)일 때만 투표자 이름 목록을 함께 반환한다.
 async function getTally(url, key, includeVoters) {
   const res = await fetch(
-    `${url}/rest/v1/cutlet_votes?select=choice,voter_name,created_at&order=created_at.desc`,
+    `${url}/rest/v1/squid_votes?select=choice,voter_name,created_at&order=created_at.desc`,
     {
       headers: {
         'apikey': key,
@@ -152,7 +152,7 @@ function diagnose(status, detail) {
     d.includes('pgrst205') ||
     d.includes('42p01')
   ) {
-    return "'cutlet_votes' 테이블이 없습니다. Supabase 대시보드 → SQL Editor 에서 supabase/schema.sql 을 실행해 테이블을 먼저 만드세요.";
+    return "'squid_votes' 테이블이 없습니다. Supabase 대시보드 → SQL Editor 에서 supabase/schema.sql 을 실행해 테이블을 먼저 만드세요.";
   }
 
   // 인증 실패: URL 또는 서비스 키가 잘못됨
