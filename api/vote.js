@@ -8,7 +8,7 @@
 //                              같은 이름이 이미 투표했으면 409 반환(변경 불가)
 
 // 후보 개수 (index.html 의 OPTIONS 와 반드시 일치해야 함)
-const OPTION_COUNT = 5;
+const OPTION_COUNT = 4;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

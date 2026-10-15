@@ -58,7 +58,7 @@
 
   .options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
   .opt {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: flex-start; gap: 12px;
     border: 1.5px solid var(--hairline);
     border-radius: 14px;
     padding: 14px 16px;
@@ -75,12 +75,15 @@
     border: 2px solid var(--hairline);
     flex-shrink: 0; position: relative;
     transition: border-color 0.15s ease;
+    margin-top: 1px;
   }
+  .opt-body { display: flex; flex-direction: column; gap: 4px; }
   .opt.selected { border-color: var(--primary); background: #fff8f1; }
   .opt.selected .radio { border-color: var(--primary); }
   .opt.selected .radio::after { content: ''; position: absolute; inset: 4px; background: var(--primary); border-radius: 50%; }
   .opt .name { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
   .opt .num { color: var(--ink-muted); font-size: 13px; margin-right: 2px; }
+  .opt .desc { font-size: 13px; line-height: 1.5; color: var(--ink-muted); letter-spacing: -0.2px; }
 
   .notice {
     display: flex; gap: 8px; align-items: flex-start;
@@ -197,14 +200,13 @@
 <script>
   // api/vote.js 의 OPTION_COUNT 와 개수가 일치해야 합니다.
   const OPTIONS = [
-    '바삭한입 오징어스틱',
-    '바삭쫄깃 오징어튀김',
-    '실속 오징어튀김',
-    '노릇바삭 오징어튀김',
-    '황금바삭 오징어튀김',
+    { name: '크리스피 오징어튀김', desc: '얇고 바삭한 튀김 옷의 식감을 강조한 세련되고 트렌디한 네이밍입니다.' },
+    { name: '시그니처 오징어튀김', desc: '대표 메뉴라는 의미를 담아 브랜드의 가치와 고급스러움을 강조한 네이밍입니다.' },
+    { name: '겉바속쫄 오징어튀김', desc: '겉은 바삭하고 속은 쫄깃한 식감을 직관적으로 표현한 네이밍입니다.' },
+    { name: '바삭 오징어 미미튀김', desc: '오징어 귀(지느러미) 부위를 뜻하는 수산 명칭인 미미(耳尾)를 활용한 별미 느낌의 네이밍입니다.' },
   ];
 
-  const STORAGE_KEY = 'squid_vote_v1';
+  const STORAGE_KEY = 'squid_vote_v2';
   // 관리자 키: 주소에 ?key=... 가 있으면 관리자로 간주 (서버가 실제 검증)
   const ADMIN_KEY = new URLSearchParams(location.search).get('key') || '';
   let selected = null;
@@ -217,11 +219,16 @@
   }
 
   const optionsEl = document.getElementById('options');
-  OPTIONS.forEach((name, i) => {
+  OPTIONS.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'opt';
-    btn.innerHTML = '<span class="radio"></span><span class="name"><span class="num">' + (i + 1) + '.</span>' + escapeHtml(name) + '</span>';
+    btn.innerHTML =
+      '<span class="radio"></span>' +
+      '<span class="opt-body">' +
+        '<span class="name"><span class="num">' + (i + 1) + '.</span>' + escapeHtml(opt.name) + '</span>' +
+        '<span class="desc">' + escapeHtml(opt.desc) + '</span>' +
+      '</span>';
     btn.onclick = () => selectOption(i + 1, btn);
     optionsEl.appendChild(btn);
   });
@@ -248,7 +255,7 @@
     if (!voterName) { err.textContent = '이름을 입력해주세요.'; return; }
     if (!selected) { err.textContent = '후보를 하나 선택해주세요.'; return; }
 
-    if (!confirm('"' + OPTIONS[selected - 1] + '"에 투표합니다.\n한 번 확인하면 변경할 수 없습니다. 계속할까요?')) {
+    if (!confirm('"' + OPTIONS[selected - 1].name + '"에 투표합니다.\n한 번 확인하면 변경할 수 없습니다. 계속할까요?')) {
       return;
     }
 
@@ -312,7 +319,7 @@
     document.getElementById('totalLine').textContent = '총 ' + total + '표';
 
     // 득표순으로 정렬 (동점은 원래 순서 유지)
-    const ranked = OPTIONS.map((name, i) => ({ name, choice: i + 1, count: counts[i] }))
+    const ranked = OPTIONS.map((opt, i) => ({ name: opt.name, choice: i + 1, count: counts[i] }))
       .sort((a, b) => b.count - a.count || a.choice - b.choice);
 
     // 동점은 같은 등수로 계산
@@ -359,7 +366,7 @@
     }
     list.innerHTML = voters.map(v =>
       '<span class="voter-chip"><b>' + escapeHtml(v.name) + '</b> → <span class="c">' +
-      (OPTIONS[v.choice - 1] ? escapeHtml(OPTIONS[v.choice - 1]) : (v.choice + '번')) + '</span></span>'
+      (OPTIONS[v.choice - 1] ? escapeHtml(OPTIONS[v.choice - 1].name) : (v.choice + '번')) + '</span></span>'
     ).join('');
   }
 
