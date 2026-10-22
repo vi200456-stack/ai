@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>오징어튀김 제품명 투표</title>
+<title>꼬막장 제품명 투표</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%BD%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <style>
   :root {
@@ -156,7 +156,7 @@
   <div class="wrap">
     <header>
       <div class="emoji">🍽️</div>
-      <h1>오징어튀김 제품명 투표</h1>
+      <h1>꼬막장 제품명 투표</h1>
       <p>어떤 이름이 가장 끌리나요? 하나만 골라주세요.</p>
     </header>
 
@@ -200,14 +200,14 @@
 <script>
   // api/vote.js 의 OPTION_COUNT 와 개수가 일치해야 합니다.
   const OPTIONS = [
-    { name: '크리스피 오징어튀김', desc: '얇고 바삭한 튀김 옷의 식감을 강조한 세련되고 트렌디한 네이밍입니다.' },
-    { name: '시그니처 오징어튀김', desc: '대표 메뉴라는 의미를 담아 브랜드의 가치와 고급스러움을 강조한 네이밍입니다.' },
-    { name: '겉바속쫄 오징어튀김', desc: '겉은 바삭하고 속은 쫄깃한 식감을 직관적으로 표현한 네이밍입니다.' },
-    { name: '바삭 오징어 미미튀김', desc: '미미(美尾)는 아름다울 미(美)와 꼬리 미(尾)를 더해, 오징어 꼬리를 먹음직스럽고 바삭하게 튀겨냈다는 의미를 담은 이름입니다.' },
-    { name: '호프집 오징어튀김', desc: '호프집에서 맥주와 함께 즐기던 바삭하고 고소한 오징어튀김의 맛을 담은 이름입니다.' },
+    { name: '명가 쫄깃 꼬막장', desc: '쫄깃한 식감과 깊은 맛을 강조한 네이밍입니다.' },
+    { name: '정성담은 꼬막장', desc: '집밥처럼 정성스럽게 담근 느낌을 담은 네이밍입니다.' },
+    { name: '밥도둑 쫄깃 꼬막장', desc: '밥을 부르는 맛과 쫄깃한 식감을 직관적으로 표현한 네이밍입니다.' },
+    { name: '한끼뚝딱 꼬막장', desc: '바쁜 현대인을 위한 간편식 느낌을 담은 네이밍입니다.' },
+    { name: '바다품은 꼬막장', desc: '신선하고 건강한 자연의 이미지를 담은 네이밍입니다.' },
   ];
 
-  const STORAGE_KEY = 'squid_vote_v3';
+  const STORAGE_KEY = 'kkomak_vote_v1';
   // 관리자 키: 주소에 ?key=... 가 있으면 관리자로 간주 (서버가 실제 검증)
   const ADMIN_KEY = new URLSearchParams(location.search).get('key') || '';
   let selected = null;
