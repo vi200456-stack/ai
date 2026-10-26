@@ -1,14 +1,20 @@
-// Vercel Serverless Function — 돈까스 제품명 투표
+// Vercel Serverless Function — 제품명 투표 (여러 투표를 poll 값으로 구분)
 // 환경변수: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (둘 다 필수)
 //           ADMIN_KEY (선택) — 설정하면 ?key=<ADMIN_KEY> 로 요청 시 투표자 이름까지 반환(관리자 전용)
 //
-//  GET  /api/vote            → 현재 집계(순위) 반환. 이름은 미포함(일반 사용자)
-//  GET  /api/vote?key=...    → key 가 ADMIN_KEY 와 일치하면 투표자 이름 목록도 포함
-//  POST /api/vote            → 투표 저장. body: { voterName, choice }
-//                              같은 이름이 이미 투표했으면 409 반환(변경 불가)
+//  GET  /api/vote?poll=eomuk          → 해당 투표의 현재 집계(순위). 이름은 미포함(일반 사용자)
+//  GET  /api/vote?poll=eomuk&key=...  → key 가 ADMIN_KEY 와 일치하면 투표자 이름 목록도 포함
+//  POST /api/vote?poll=eomuk          → 투표 저장. body: { voterName, choice }
+//                                       같은 이름이 이미 투표했으면 409 반환(변경 불가)
+//  poll 이 없으면 첫 번째 투표(eomuk)로 처리한다.
 
-// 후보 개수 (index.html 의 OPTIONS 와 반드시 일치해야 함)
-const OPTION_COUNT = 8;
+// 투표별 저장 테이블과 후보 개수 (index.html 의 POLLS 와 반드시 일치해야 함).
+// 여기 적힌 테이블만 접근 가능하다.
+const POLLS = {
+  eomuk:   { table: 'squid_votes',   optionCount: 8 }, // 어묵탕 (기존 테이블 재사용)
+  sanjeok: { table: 'sanjeok_votes', optionCount: 6 }, // 산적구이
+};
+const DEFAULT_POLL = 'eomuk';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,6 +31,15 @@ export default async function handler(req, res) {
     });
   }
 
+  const body = req.method === 'POST'
+    ? (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {}))
+    : {};
+  const pollId = getQueryParam(req, 'poll') || body.poll || DEFAULT_POLL;
+  const poll = Object.prototype.hasOwnProperty.call(POLLS, pollId) ? POLLS[pollId] : null;
+  if (!poll) {
+    return res.status(400).json({ error: '알 수 없는 투표입니다.' });
+  }
+
   try {
     if (req.method === 'GET') {
       // 관리자 키가 일치할 때만 투표자 이름을 포함
@@ -32,12 +47,11 @@ export default async function handler(req, res) {
       const providedKey = getQueryParam(req, 'key');
       const isAdmin = !!adminKey && providedKey === adminKey;
 
-      const tally = await getTally(url, key, isAdmin);
-      return res.status(200).json({ ...tally, admin: isAdmin });
+      const tally = await getTally(url, key, poll, isAdmin);
+      return res.status(200).json({ poll: pollId, ...tally, admin: isAdmin });
     }
 
     if (req.method === 'POST') {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const voterName = (body?.voterName || '').trim();
       const choice = Math.round(Number(body?.choice));
 
@@ -47,11 +61,11 @@ export default async function handler(req, res) {
       if (voterName.length > 40) {
         return res.status(400).json({ error: '이름은 40자 이하로 입력해주세요.' });
       }
-      if (!(choice >= 1 && choice <= OPTION_COUNT)) {
+      if (!(choice >= 1 && choice <= poll.optionCount)) {
         return res.status(400).json({ error: '올바른 후보를 선택해주세요.' });
       }
 
-      const insertRes = await fetch(`${url}/rest/v1/squid_votes`, {
+      const insertRes = await fetch(`${url}/rest/v1/${poll.table}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,13 +84,13 @@ export default async function handler(req, res) {
       }
       if (!insertRes.ok) {
         const detail = await insertRes.text();
-        const diag = diagnose(insertRes.status, detail);
+        const diag = diagnose(insertRes.status, detail, poll.table);
         return res.status(502).json({ error: diag, detail: detail.slice(0, 300) });
       }
 
       // 저장 성공 → 최신 집계 함께 반환 (확인 후 바로 실시간 결과 표시)
-      const tally = await getTally(url, key);
-      return res.status(200).json({ ok: true, ...tally });
+      const tally = await getTally(url, key, poll, false);
+      return res.status(200).json({ ok: true, poll: pollId, ...tally });
     }
 
     return res.status(405).json({ error: 'GET 또는 POST 요청만 허용됩니다.' });
@@ -90,9 +104,9 @@ export default async function handler(req, res) {
 
 // 전체 투표를 읽어 후보별 카운트로 집계.
 // includeVoters=true(관리자)일 때만 투표자 이름 목록을 함께 반환한다.
-async function getTally(url, key, includeVoters) {
+async function getTally(url, key, poll, includeVoters) {
   const res = await fetch(
-    `${url}/rest/v1/squid_votes?select=choice,voter_name,created_at&order=created_at.desc`,
+    `${url}/rest/v1/${poll.table}?select=choice,voter_name,created_at&order=created_at.desc`,
     {
       headers: {
         'apikey': key,
@@ -103,14 +117,14 @@ async function getTally(url, key, includeVoters) {
 
   if (!res.ok) {
     const detail = await res.text();
-    throw new Error(diagnose(res.status, detail));
+    throw new Error(diagnose(res.status, detail, poll.table));
   }
 
   const rows = await res.json();
-  const counts = Array(OPTION_COUNT).fill(0);
+  const counts = Array(poll.optionCount).fill(0);
   for (const r of rows) {
     const c = Number(r.choice);
-    if (c >= 1 && c <= OPTION_COUNT) counts[c - 1]++;
+    if (c >= 1 && c <= poll.optionCount) counts[c - 1]++;
   }
 
   const result = { counts, total: rows.length };
@@ -141,7 +155,7 @@ function getQueryParam(req, name) {
 }
 
 // Supabase(PostgREST) 응답을 사람이 읽을 수 있는 원인 메시지로 변환
-function diagnose(status, detail) {
+function diagnose(status, detail, table) {
   const d = (detail || '').toLowerCase();
 
   // 테이블 없음: 스키마 미실행
@@ -152,7 +166,7 @@ function diagnose(status, detail) {
     d.includes('pgrst205') ||
     d.includes('42p01')
   ) {
-    return "'squid_votes' 테이블이 없습니다. Supabase 대시보드 → SQL Editor 에서 supabase/schema.sql 을 실행해 테이블을 먼저 만드세요.";
+    return `'${table}' 테이블이 없습니다. Supabase 대시보드 → SQL Editor 에서 supabase/schema.sql 을 실행해 테이블을 먼저 만드세요.`;
   }
 
   // 인증 실패: URL 또는 서비스 키가 잘못됨

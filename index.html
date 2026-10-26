@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>어묵탕 제품명 투표</title>
+<title>제품명 투표</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%BD%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <style>
   :root {
@@ -149,6 +149,17 @@
 
   .admin-banner { background: #fff1e3; border: 1px solid #ffd8ad; color: #7a4b00; border-radius: 12px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; text-align: center; font-weight: 600; }
 
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab {
+    flex: 1; font-family: var(--font); font-size: 16px; font-weight: 600; letter-spacing: -0.3px;
+    color: var(--ink-muted); background: var(--canvas);
+    border: 1.5px solid var(--hairline); border-radius: 14px;
+    padding: 12px 10px; cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .tab.active { color: var(--primary); border-color: var(--primary); background: #fff8f1; }
+  .tab-done { color: #34a853; font-size: 14px; margin-left: 2px; }
+
   footer { text-align: center; color: var(--ink-muted); font-size: 12px; margin-top: 28px; letter-spacing: -0.1px; }
 </style>
 </head>
@@ -156,9 +167,11 @@
   <div class="wrap">
     <header>
       <div class="emoji">🍽️</div>
-      <h1>어묵탕 제품명 투표</h1>
-      <p>어떤 이름이 가장 끌리나요? 하나만 골라주세요.</p>
+      <h1>제품명 투표</h1>
+      <p>제품별로 가장 끌리는 이름을 하나씩 골라주세요.</p>
     </header>
+
+    <div class="tabs" id="tabs"></div>
 
     <div class="card form-view" id="formView">
       <div class="field">
@@ -182,7 +195,7 @@
 
     <div class="card results" id="results">
       <div class="result-head">
-        <h2>실시간 투표 결과</h2>
+        <h2 id="resultTitle">실시간 투표 결과</h2>
         <span class="live"><span class="dot"></span>LIVE</span>
       </div>
       <div class="total" id="totalLine">집계 중...</div>
@@ -198,50 +211,53 @@
   </div>
 
 <script>
-  // api/vote.js 의 OPTION_COUNT 와 개수가 일치해야 합니다.
-  const OPTIONS = [
-    { name: '깊은맛 모둠 어묵탕' },
-    { name: '진국 모둠 어묵탕' },
-    { name: '따끈한 하루 어묵탕' },
-    { name: '어묵엔 국물' },
-    { name: '탱글 한 그릇 어묵탕' },
-    { name: '심야포차 어묵탕' },
-    { name: '부산 진국 어묵탕' },
-    { name: '부산 포차 어묵탕' },
-  ];
+  // 투표 목록. 키(eomuk, sanjeok)와 후보 개수는 api/vote.js 의 POLLS 와 반드시 일치해야 합니다.
+  const POLLS = {
+    eomuk: {
+      title: '어묵탕',
+      storageKey: 'eomuk_vote_v1',
+      options: [
+        { name: '깊은맛 모둠 어묵탕' },
+        { name: '진국 모둠 어묵탕' },
+        { name: '따끈한 하루 어묵탕' },
+        { name: '어묵엔 국물' },
+        { name: '탱글 한 그릇 어묵탕' },
+        { name: '심야포차 어묵탕' },
+        { name: '부산 진국 어묵탕' },
+        { name: '부산 포차 어묵탕' },
+      ],
+    },
+    sanjeok: {
+      title: '산적구이',
+      storageKey: 'sanjeok_vote_v1',
+      options: [
+        { name: '실속 산적구이' },
+        { name: '맛있는 산적구이' },
+        { name: '불고기맛 산적구이' },
+        { name: '더 큰 산적구이' },
+        { name: '알찬 산적구이' },
+        { name: '산도적도 반할 산적구이' },
+      ],
+    },
+  };
+  const POLL_IDS = Object.keys(POLLS);
+  const NAME_KEY = 'voter_name';
 
-  const STORAGE_KEY = 'eomuk_vote_v1';
+  const params = new URLSearchParams(location.search);
   // 관리자 키: 주소에 ?key=... 가 있으면 관리자로 간주 (서버가 실제 검증)
-  const ADMIN_KEY = new URLSearchParams(location.search).get('key') || '';
+  const ADMIN_KEY = params.get('key') || '';
+  let currentPoll = POLLS[params.get('poll')] ? params.get('poll') : POLL_IDS[0];
   let selected = null;
   let myChoice = null;
   let pollTimer = null;
 
+  function poll() { return POLLS[currentPoll]; }
+
   // GET 요청 URL (관리자면 key 붙여서 이름까지 받아옴)
-  function tallyUrl() {
-    return '/api/vote' + (ADMIN_KEY ? ('?key=' + encodeURIComponent(ADMIN_KEY)) : '');
-  }
-
-  const optionsEl = document.getElementById('options');
-  OPTIONS.forEach((opt, i) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'opt';
-    btn.innerHTML =
-      '<span class="radio"></span>' +
-      '<span class="opt-body">' +
-        '<span class="name"><span class="num">' + (i + 1) + '.</span>' + escapeHtml(opt.name) + '</span>' +
-        (opt.desc ? '<span class="desc">' + escapeHtml(opt.desc) + '</span>' : '') +
-      '</span>';
-    btn.onclick = () => selectOption(i + 1, btn);
-    optionsEl.appendChild(btn);
-  });
-
-  function selectOption(choice, btn) {
-    selected = choice;
-    document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
-    btn.classList.add('selected');
-    document.getElementById('formErr').textContent = '';
+  function tallyUrl(id) {
+    let u = '/api/vote?poll=' + encodeURIComponent(id);
+    if (ADMIN_KEY) u += '&key=' + encodeURIComponent(ADMIN_KEY);
+    return u;
   }
 
   function escapeHtml(s) {
@@ -250,7 +266,103 @@
     }[c]));
   }
 
+  function loadLocal(id) {
+    try {
+      const raw = localStorage.getItem(POLLS[id].storageKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
+  function saveLocal(id, name, choice) {
+    try {
+      localStorage.setItem(POLLS[id].storageKey, JSON.stringify({ name, choice, voted: true }));
+      localStorage.setItem(NAME_KEY, name);
+    } catch (e) {}
+  }
+
+  function hasVoted(id) {
+    const saved = loadLocal(id);
+    return !!(saved && (saved.voted || saved.choice));
+  }
+
+  // ---- 탭 ----
+  function renderTabs() {
+    const tabs = document.getElementById('tabs');
+    tabs.innerHTML = '';
+    POLL_IDS.forEach(id => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tab' + (id === currentPoll ? ' active' : '');
+      b.innerHTML = escapeHtml(POLLS[id].title) + (hasVoted(id) ? ' <span class="tab-done">✔</span>' : '');
+      b.onclick = () => switchPoll(id);
+      tabs.appendChild(b);
+    });
+  }
+
+  function switchPoll(id) {
+    if (id === currentPoll) return;
+    currentPoll = id;
+    // 주소창도 현재 탭으로 맞춰서, 새로고침하거나 공유해도 같은 탭이 열리게 함
+    const p = new URLSearchParams(location.search);
+    p.set('poll', id);
+    history.replaceState(null, '', location.pathname + '?' + p.toString());
+    openPoll();
+  }
+
+  // 현재 탭을 그린다: 투표한 탭(또는 관리자)은 결과만, 아니면 투표 화면
+  function openPoll() {
+    stopPolling();
+    selected = null;
+    const saved = loadLocal(currentPoll);
+    myChoice = saved && saved.choice ? saved.choice : null;
+
+    renderTabs();
+    document.getElementById('formErr').textContent = '';
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = false;
+    btn.textContent = '투표 확인하기';
+    document.getElementById('resultTitle').textContent = '실시간 투표 결과 · ' + poll().title;
+    document.getElementById('totalLine').textContent = '집계 중...';
+    document.getElementById('bars').innerHTML = '';
+    document.getElementById('votersBox').hidden = true;
+
+    renderOptions();
+
+    if (ADMIN_KEY || hasVoted(currentPoll)) {
+      showResults(null);
+    } else {
+      document.getElementById('results').classList.remove('show');
+      document.getElementById('formView').classList.remove('hide');
+    }
+  }
+
+  function renderOptions() {
+    const optionsEl = document.getElementById('options');
+    optionsEl.innerHTML = '';
+    poll().options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'opt';
+      btn.innerHTML =
+        '<span class="radio"></span>' +
+        '<span class="opt-body">' +
+          '<span class="name"><span class="num">' + (i + 1) + '.</span>' + escapeHtml(opt.name) + '</span>' +
+          (opt.desc ? '<span class="desc">' + escapeHtml(opt.desc) + '</span>' : '') +
+        '</span>';
+      btn.onclick = () => selectOption(i + 1, btn);
+      optionsEl.appendChild(btn);
+    });
+  }
+
+  function selectOption(choice, btn) {
+    selected = choice;
+    document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('formErr').textContent = '';
+  }
+
   async function submitVote() {
+    const id = currentPoll;
     const err = document.getElementById('formErr');
     const btn = document.getElementById('submitBtn');
     const voterName = document.getElementById('voterName').value.trim();
@@ -259,7 +371,8 @@
     if (!voterName) { err.textContent = '이름을 입력해주세요.'; return; }
     if (!selected) { err.textContent = '후보를 하나 선택해주세요.'; return; }
 
-    if (!confirm('"' + OPTIONS[selected - 1].name + '"에 투표합니다.\n한 번 확인하면 변경할 수 없습니다. 계속할까요?')) {
+    const choice = selected;
+    if (!confirm('[' + POLLS[id].title + '] "' + POLLS[id].options[choice - 1].name + '"에 투표합니다.\n한 번 확인하면 변경할 수 없습니다. 계속할까요?')) {
       return;
     }
 
@@ -267,18 +380,18 @@
     btn.textContent = '투표 확인 중...';
 
     try {
-      const res = await fetch('/api/vote', {
+      const res = await fetch('/api/vote?poll=' + encodeURIComponent(id), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voterName, choice: selected }),
+        body: JSON.stringify({ poll: id, voterName, choice }),
       });
       const data = await res.json();
 
       if (res.status === 409) {
         // 이미 투표한 이름 → 다시 투표할 수 없으니 결과 화면으로 보냄
-        saveLocal(voterName, null);
+        saveLocal(id, voterName, null);
         alert(data.error || '이미 투표한 이름입니다. 결과 화면으로 이동합니다.');
-        showResults(null);
+        if (id === currentPoll) openPoll();
         return;
       }
       if (!res.ok) {
@@ -288,9 +401,12 @@
         return;
       }
 
-      myChoice = selected;
-      saveLocal(voterName, selected);
-      showResults(data);
+      saveLocal(id, voterName, choice);
+      if (id === currentPoll) {
+        myChoice = choice;
+        renderTabs();
+        showResults(data);
+      }
     } catch (e) {
       err.textContent = '네트워크 오류가 발생했어요. 인터넷 연결을 확인해주세요.';
       btn.disabled = false;
@@ -298,17 +414,7 @@
     }
   }
 
-  function saveLocal(name, choice) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, choice, voted: true })); } catch (e) {}
-  }
-
-  function loadLocal() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
-  }
-
+  // ---- 결과 ----
   function showResults(data) {
     document.getElementById('formView').classList.add('hide');
     document.getElementById('results').classList.add('show');
@@ -317,14 +423,15 @@
   }
 
   function renderTally(data) {
-    const counts = data.counts || Array(OPTIONS.length).fill(0);
+    const options = poll().options;
+    const counts = data.counts || Array(options.length).fill(0);
     const total = data.total || 0;
     const max = Math.max(1, ...counts);
 
     document.getElementById('totalLine').textContent = '총 ' + total + '표';
 
     // 득표순으로 정렬 (동점은 원래 순서 유지)
-    const ranked = OPTIONS.map((opt, i) => ({ name: opt.name, choice: i + 1, count: counts[i] }))
+    const ranked = options.map((opt, i) => ({ name: opt.name, choice: i + 1, count: counts[i] || 0 }))
       .sort((a, b) => b.count - a.count || a.choice - b.choice);
 
     // 동점은 같은 등수로 계산
@@ -364,6 +471,7 @@
     const box = document.getElementById('votersBox');
     if (!voters) { box.hidden = true; return; }
     box.hidden = false;
+    const options = poll().options;
     const list = document.getElementById('voterList');
     if (voters.length === 0) {
       list.innerHTML = '<span class="voters-empty">아직 참여자가 없습니다.</span>';
@@ -371,52 +479,58 @@
     }
     list.innerHTML = voters.map(v =>
       '<span class="voter-chip"><b>' + escapeHtml(v.name) + '</b> → <span class="c">' +
-      (OPTIONS[v.choice - 1] ? escapeHtml(OPTIONS[v.choice - 1].name) : (v.choice + '번')) + '</span></span>'
+      (options[v.choice - 1] ? escapeHtml(options[v.choice - 1].name) : (v.choice + '번')) + '</span></span>'
     ).join('');
   }
 
   function startPolling() {
     refresh();
-    if (pollTimer) clearInterval(pollTimer);
+    stopPolling();
     pollTimer = setInterval(refresh, 4000);
   }
 
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
   async function refresh() {
+    const id = currentPoll;
     try {
-      const res = await fetch(tallyUrl(), { method: 'GET' });
+      const res = await fetch(tallyUrl(id), { method: 'GET' });
       const data = await res.json();
+      if (id !== currentPoll) return; // 응답이 오기 전에 탭을 바꾼 경우 무시
       if (!res.ok) {
         document.getElementById('totalLine').textContent = '⚠️ ' + (data.error || '결과를 불러오지 못했습니다.');
         return;
       }
       renderTally(data);
     } catch (e) {
+      if (id !== currentPoll) return;
       document.getElementById('totalLine').textContent = '⚠️ 네트워크 오류로 결과를 불러오지 못했습니다.';
     }
   }
 
   (function init() {
-    // 관리자 주소(?key=...)로 들어오면 투표 없이 바로 결과+이름 모니터링 화면
+    // 다른 탭에서 입력한 이름을 미리 채워둠
+    try {
+      const savedName = localStorage.getItem(NAME_KEY);
+      if (savedName) document.getElementById('voterName').value = savedName;
+    } catch (e) {}
+
+    // 관리자 주소(?key=...)로 들어오면 투표 없이 결과+이름 모니터링 화면
     if (ADMIN_KEY) {
       const banner = document.createElement('div');
       banner.className = 'admin-banner';
       banner.textContent = '🔒 관리자 모드 — 참여자 이름이 표시됩니다';
       const resultsCard = document.getElementById('results');
       resultsCard.insertBefore(banner, resultsCard.firstChild);
-      showResults(null);
-      return;
     }
-    const saved = loadLocal();
-    // 이미 투표한 기기는 다시 들어와도 결과만 표시
-    if (saved && (saved.voted || saved.choice)) {
-      myChoice = saved.choice || null;
-      showResults(null);
-    }
+    openPoll();
   })();
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      stopPolling();
     } else if (document.getElementById('results').classList.contains('show')) {
       startPolling();
     }
