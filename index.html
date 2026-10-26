@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>꼬막장 제품명 투표</title>
+<title>어묵탕 제품명 투표</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%BD%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <style>
   :root {
@@ -156,7 +156,7 @@
   <div class="wrap">
     <header>
       <div class="emoji">🍽️</div>
-      <h1>꼬막장 제품명 투표</h1>
+      <h1>어묵탕 제품명 투표</h1>
       <p>어떤 이름이 가장 끌리나요? 하나만 골라주세요.</p>
     </header>
 
@@ -200,14 +200,17 @@
 <script>
   // api/vote.js 의 OPTION_COUNT 와 개수가 일치해야 합니다.
   const OPTIONS = [
-    { name: '명가 쫄깃 꼬막장', desc: '쫄깃한 식감과 깊은 맛을 강조한 네이밍입니다.' },
-    { name: '정성담은 꼬막장', desc: '집밥처럼 정성스럽게 담근 느낌을 담은 네이밍입니다.' },
-    { name: '밥도둑 쫄깃 꼬막장', desc: '밥을 부르는 맛과 쫄깃한 식감을 직관적으로 표현한 네이밍입니다.' },
-    { name: '한끼뚝딱 꼬막장', desc: '바쁜 현대인을 위한 간편식 느낌을 담은 네이밍입니다.' },
-    { name: '바다품은 꼬막장', desc: '신선하고 건강한 자연의 이미지를 담은 네이밍입니다.' },
+    { name: '깊은맛 모둠 어묵탕' },
+    { name: '진국 모둠 어묵탕' },
+    { name: '따끈한 하루 어묵탕' },
+    { name: '어묵엔 국물' },
+    { name: '탱글 한 그릇 어묵탕' },
+    { name: '심야포차 어묵탕' },
+    { name: '부산 진국 어묵탕' },
+    { name: '부산 포차 어묵탕' },
   ];
 
-  const STORAGE_KEY = 'kkomak_vote_v1';
+  const STORAGE_KEY = 'eomuk_vote_v1';
   // 관리자 키: 주소에 ?key=... 가 있으면 관리자로 간주 (서버가 실제 검증)
   const ADMIN_KEY = new URLSearchParams(location.search).get('key') || '';
   let selected = null;
@@ -228,7 +231,7 @@
       '<span class="radio"></span>' +
       '<span class="opt-body">' +
         '<span class="name"><span class="num">' + (i + 1) + '.</span>' + escapeHtml(opt.name) + '</span>' +
-        '<span class="desc">' + escapeHtml(opt.desc) + '</span>' +
+        (opt.desc ? '<span class="desc">' + escapeHtml(opt.desc) + '</span>' : '') +
       '</span>';
     btn.onclick = () => selectOption(i + 1, btn);
     optionsEl.appendChild(btn);
@@ -272,9 +275,10 @@
       const data = await res.json();
 
       if (res.status === 409) {
-        err.textContent = data.error || '이미 투표한 이름입니다.';
-        btn.disabled = false;
-        btn.textContent = '투표 확인하기';
+        // 이미 투표한 이름 → 다시 투표할 수 없으니 결과 화면으로 보냄
+        saveLocal(voterName, null);
+        alert(data.error || '이미 투표한 이름입니다. 결과 화면으로 이동합니다.');
+        showResults(null);
         return;
       }
       if (!res.ok) {
@@ -295,7 +299,7 @@
   }
 
   function saveLocal(name, choice) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, choice })); } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, choice, voted: true })); } catch (e) {}
   }
 
   function loadLocal() {
@@ -403,8 +407,9 @@
       return;
     }
     const saved = loadLocal();
-    if (saved && saved.choice) {
-      myChoice = saved.choice;
+    // 이미 투표한 기기는 다시 들어와도 결과만 표시
+    if (saved && (saved.voted || saved.choice)) {
+      myChoice = saved.choice || null;
       showResults(null);
     }
   })();

@@ -9,7 +9,7 @@ create table if not exists public.squid_votes (
   id          uuid primary key default gen_random_uuid(),
   created_at  timestamptz not null default now(),
   voter_name  text not null,
-  choice      int  not null check (choice between 1 and 5)
+  choice      int  not null check (choice between 1 and 20)
 );
 
 -- 같은 이름으로 중복/재투표 방지 (대소문자 무시 기준)
