@@ -11,7 +11,8 @@
 // 투표별 저장 테이블과 후보 개수 (index.html 의 POLLS 와 반드시 일치해야 함).
 // 여기 적힌 테이블만 접근 가능하다.
 const POLLS = {
-  eomuk:   { table: 'squid_votes',   optionCount: 8 }, // 어묵탕 (기존 테이블 재사용)
+  // closed: true 인 투표는 더 이상 표를 받지 않는다 (결과는 /results 페이지에 이미지로 보관)
+  eomuk:   { table: 'squid_votes',   optionCount: 8, closed: true }, // 어묵탕 (마감)
   sanjeok: { table: 'sanjeok_votes', optionCount: 6 }, // 산적구이
 };
 const DEFAULT_POLL = 'eomuk';
@@ -52,6 +53,9 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
+      if (poll.closed) {
+        return res.status(403).json({ error: '투표가 마감되었습니다. 결과는 지난 투표 결과 페이지에서 볼 수 있어요.' });
+      }
       const voterName = (body?.voterName || '').trim();
       const choice = Math.round(Number(body?.choice));
 

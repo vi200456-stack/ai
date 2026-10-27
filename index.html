@@ -169,6 +169,11 @@
   .tab-status { display: block; font-size: 12px; font-weight: 600; color: var(--ink-muted); margin-top: 2px; }
   .tab-status.done { color: #34a853; }
 
+  .golink {
+    display: block; margin-top: 16px; text-align: center; text-decoration: none;
+    background: var(--canvas); border: 1.5px solid var(--hairline); border-radius: 14px;
+    padding: 14px; font-size: 15px; font-weight: 700; color: #5b4b3b;
+  }
   footer { text-align: center; color: var(--ink-muted); font-size: 12px; margin-top: 28px; letter-spacing: -0.1px; }
 </style>
 </head>
@@ -217,26 +222,15 @@
       </div>
     </div>
 
+    <a class="golink" href="/results/">📁 지난 투표 결과 보기 ›</a>
+
     <footer>투표는 이름당 한 번만 가능하며 변경할 수 없습니다.</footer>
   </div>
 
 <script>
-  // 투표 목록. 키(eomuk, sanjeok)와 후보 개수는 api/vote.js 의 POLLS 와 반드시 일치해야 합니다.
+  // 진행 중인 투표 목록. 키와 후보 개수는 api/vote.js 의 POLLS 와 반드시 일치해야 합니다.
+  // 마감된 투표(어묵탕)는 여기서 빼고, 결과는 /results 페이지에 이미지로 보관합니다.
   const POLLS = {
-    eomuk: {
-      title: '어묵탕',
-      storageKey: 'eomuk_vote_v1',
-      options: [
-        { name: '깊은맛 모둠 어묵탕' },
-        { name: '진국 모둠 어묵탕' },
-        { name: '따끈한 하루 어묵탕' },
-        { name: '어묵엔 국물' },
-        { name: '탱글 한 그릇 어묵탕' },
-        { name: '심야포차 어묵탕' },
-        { name: '부산 진국 어묵탕' },
-        { name: '부산 포차 어묵탕' },
-      ],
-    },
     sanjeok: {
       title: '산적구이',
       storageKey: 'sanjeok_vote_v1',
