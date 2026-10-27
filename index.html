@@ -163,7 +163,9 @@
     transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
   }
   .tab.active { color: var(--primary); border-color: var(--primary); background: #fff8f1; }
-  .tab-done { color: #34a853; font-size: 14px; margin-left: 2px; }
+  .tab-title { display: block; }
+  .tab-status { display: block; font-size: 12px; font-weight: 600; color: var(--ink-muted); margin-top: 2px; }
+  .tab-status.done { color: #34a853; }
 
   footer { text-align: center; color: var(--ink-muted); font-size: 12px; margin-top: 28px; letter-spacing: -0.1px; }
 </style>
@@ -251,7 +253,8 @@
   const params = new URLSearchParams(location.search);
   // 관리자 키: 주소에 ?key=... 가 있으면 관리자로 간주 (서버가 실제 검증)
   const ADMIN_KEY = params.get('key') || '';
-  let currentPoll = POLLS[params.get('poll')] ? params.get('poll') : POLL_IDS[0];
+  // 주소에 ?poll= 이 있으면 그 탭, 없으면 초기화 때 정함(투표한 탭 우선)
+  let currentPoll = POLLS[params.get('poll')] ? params.get('poll') : null;
   let selected = null;
   let myChoice = null;
   let pollTimer = null;
@@ -271,18 +274,49 @@
     }[c]));
   }
 
-  function loadLocal(id) {
+  // 투표 기록은 localStorage 와 쿠키 두 곳에 남긴다.
+  // 앱(카톡 등)이 한쪽을 지워도 다른 쪽이 남아 있으면 결과가 계속 보이게 하려는 것.
+  const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+  function getCookie(key) {
+    const m = document.cookie.match(new RegExp('(?:^|; )' + key + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function setCookie(key, value) {
     try {
-      const raw = localStorage.getItem(POLLS[id].storageKey);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
+      document.cookie = key + '=' + encodeURIComponent(value) +
+        '; max-age=' + COOKIE_MAX_AGE + '; path=/; SameSite=Lax' +
+        (location.protocol === 'https:' ? '; Secure' : '');
+    } catch (e) {}
+  }
+
+  function loadLocal(id) {
+    const key = POLLS[id].storageKey;
+    let saved = null;
+    try {
+      const raw = localStorage.getItem(key);
+      saved = raw ? JSON.parse(raw) : null;
+    } catch (e) {}
+    const c = getCookie(key);
+    if (!saved && c) {
+      // localStorage 가 지워졌지만 쿠키가 남은 경우 → 쿠키로 복구
+      saved = { name: null, choice: Number(c) || null, voted: true };
+      try { localStorage.setItem(key, JSON.stringify(saved)); } catch (e) {}
+    } else if (saved && !c) {
+      // 반대로 쿠키만 지워진 경우 → 쿠키 다시 남김
+      setCookie(key, saved.choice || 'v');
+    }
+    return saved;
   }
 
   function saveLocal(id, name, choice) {
+    const key = POLLS[id].storageKey;
     try {
-      localStorage.setItem(POLLS[id].storageKey, JSON.stringify({ name, choice, voted: true }));
+      localStorage.setItem(key, JSON.stringify({ name, choice, voted: true }));
       localStorage.setItem(NAME_KEY, name);
     } catch (e) {}
+    setCookie(key, choice || 'v');
   }
 
   function hasVoted(id) {
@@ -298,7 +332,10 @@
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'tab' + (id === currentPoll ? ' active' : '');
-      b.innerHTML = escapeHtml(POLLS[id].title) + (hasVoted(id) ? ' <span class="tab-done">✔</span>' : '');
+      b.innerHTML = '<span class="tab-title">' + escapeHtml(POLLS[id].title) + '</span>' +
+        (hasVoted(id)
+          ? '<span class="tab-status done">✔ 투표 완료</span>'
+          : '<span class="tab-status">투표 전</span>');
       b.onclick = () => switchPoll(id);
       tabs.appendChild(b);
     });
@@ -529,6 +566,10 @@
       banner.textContent = '🔒 관리자 모드 — 참여자 이름이 표시됩니다';
       const resultsCard = document.getElementById('results');
       resultsCard.insertBefore(banner, resultsCard.firstChild);
+    }
+    // 기본 링크로 들어오면 이미 투표한 탭을 먼저 열어서 결과가 바로 보이게 함
+    if (!currentPoll) {
+      currentPoll = POLL_IDS.find(id => hasVoted(id)) || POLL_IDS[0];
     }
     openPoll();
   })();
