@@ -15,7 +15,7 @@ const POLLS = {
   eomuk:   { table: 'squid_votes',   optionCount: 8, closed: true }, // 어묵탕 (마감)
   sanjeok: { table: 'sanjeok_votes', optionCount: 6, closed: true }, // 산적구이 1차 (마감, 동점)
   sanjeok2: { table: 'sanjeok2_votes', optionCount: 2, closed: true }, // 산적구이 재투표 (후보 변경으로 중단)
-  sanjeok3: { table: 'sanjeok3_votes', optionCount: 7 }, // 산적구이 (새 후보 7개)
+  sanjeok3: { table: 'sanjeok3_votes', optionCount: 8 }, // 저가형 산적구이 (새 후보 8개, 8번은 나중에 추가)
 };
 const DEFAULT_POLL = 'eomuk';
 
