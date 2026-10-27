@@ -236,19 +236,23 @@
   // 진행 중인 투표 목록. 키와 후보 개수는 api/vote.js 의 POLLS 와 반드시 일치해야 합니다.
   // 마감된 투표(어묵탕)는 여기서 빼고, 결과는 /results 페이지에 이미지로 보관합니다.
   const POLLS = {
-    sanjeok2: {
-      title: '산적구이 재투표',
-      storageKey: 'sanjeok2_vote_v1',
-      // 재투표 안내 (투표 화면 맨 위에 표시)
-      revoteNote: '1차 투표(10/26~10/27)에서 <b>실속 산적구이</b>와 <b>산도적도 반할 산적구이</b>가 각 6표로 <b>동점</b>이 나와, 두 후보로 다시 투표합니다.<br>1차 투표 참여 여부와 관계없이 <b>모두 다시 투표</b>해 주세요.',
+    sanjeok3: {
+      title: '산적구이',
+      storageKey: 'sanjeok3_vote_v1',
+      // 비슷한 이름끼리 이어지도록 순서를 맞춤 (고기산적 → 불고기맛 → 정석 → 고기 → 한입)
       options: [
-        { name: '실속 산적구이', desc: '1차 투표 공동 1위' },
-        { name: '산도적도 반할 산적구이', desc: '1차 투표 공동 1위' },
+        { name: '프리미엄 고기산적' },
+        { name: '불고기맛에 빠진 고기산적' },
+        { name: '불고기맛 그대로 산적구이' },
+        { name: '고기반찬의 정석 산적구이' },
+        { name: '구이의 정석 산적구이' },
+        { name: '고기예찬 산적구이' },
+        { name: '한입에 반한 산적구이' },
       ],
     },
   };
-  // 예전 링크(?poll=sanjeok)로 들어와도 재투표 탭이 열리게 함
-  const POLL_ALIASES = { sanjeok: 'sanjeok2' };
+  // 예전 산적구이 링크(?poll=sanjeok, sanjeok2)로 들어와도 지금 산적구이 투표가 열리게 함
+  const POLL_ALIASES = { sanjeok: 'sanjeok3', sanjeok2: 'sanjeok3' };
   const POLL_IDS = Object.keys(POLLS);
   const NAME_KEY = 'voter_name';
 

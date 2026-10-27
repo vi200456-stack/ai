@@ -90,6 +90,19 @@
   // 새 투표를 마감하면 결과 이미지를 이 폴더에 추가하고 아래 목록에 한 줄 추가하면 된다.
   const ARCHIVE = [
     {
+      title: '산적구이 재투표 (중단)',
+      period: '2026.10.27(화)',
+      total: 16,
+      winners: ['실속 산적구이'],
+      winnerVotes: 10,
+      winLabel: '중단 시점 1위',
+      badge: '투표 중단',
+      note: '→ 후보가 바뀌어 중단, 새 후보로 다시 투표',
+      candidates: ['실속 산적구이', '산도적도 반할 산적구이'],
+      image: '/results/sanjeok-2.png',
+      file: '산적구이_재투표_중단_결과.png',
+    },
+    {
       title: '산적구이 (1차)',
       period: '2026.10.26(월) ~ 10.27(화)',
       total: 23,
@@ -150,9 +163,9 @@
     list.innerHTML = items.map((a, idx) => {
       const matched = q ? a.candidates.filter(c => c.toLowerCase().includes(q.toLowerCase()) && !a.winners.includes(c)) : [];
       return '<div class="item">' +
-        '<div class="ih"><b>' + hl(a.title, q) + '</b><span class="badge">투표 마감</span></div>' +
+        '<div class="ih"><b>' + hl(a.title, q) + '</b><span class="badge">' + escapeHtml(a.badge || '투표 마감') + '</span></div>' +
         '<div class="meta">' + escapeHtml(a.period) + ' · 총 ' + a.total + '표</div>' +
-        '<div class="win"><span class="t">🏆 ' + (a.winners.length > 1 ? '공동 1위' : '1위') + ' (' + (a.winners.length > 1 ? '각 ' : '') + a.winnerVotes + '표)</span><br>' +
+        '<div class="win"><span class="t">🏆 ' + (a.winLabel || (a.winners.length > 1 ? '공동 1위' : '1위')) + ' (' + (a.winners.length > 1 ? '각 ' : '') + a.winnerVotes + '표)</span><br>' +
           a.winners.map(w => hl(w, q)).join(' · ') +
           (a.note ? '<br><span style="color:#c2410c;font-weight:700">' + escapeHtml(a.note) + '</span>' : '') +
           (matched.length ? '<br><span style="color:var(--ink-muted);font-size:13px">검색된 후보: ' + matched.map(m => hl(m, q)).join(', ') + '</span>' : '') +

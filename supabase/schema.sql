@@ -42,3 +42,14 @@ create table if not exists public.sanjeok2_votes (
 create unique index if not exists sanjeok2_votes_voter_name_key
   on public.sanjeok2_votes (lower(voter_name));
 alter table public.sanjeok2_votes enable row level security;
+
+-- 산적구이 새 후보 7개 투표 테이블 (재투표는 후보 변경으로 중단)
+create table if not exists public.sanjeok3_votes (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  voter_name  text not null,
+  choice      int  not null check (choice between 1 and 20)
+);
+create unique index if not exists sanjeok3_votes_voter_name_key
+  on public.sanjeok3_votes (lower(voter_name));
+alter table public.sanjeok3_votes enable row level security;
