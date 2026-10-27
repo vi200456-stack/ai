@@ -110,6 +110,11 @@
   .btn:active { transform: scale(0.98); }
   .btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 
+  .revote {
+    background: #fff6ef; border: 1.5px dashed #f2a774; border-radius: 12px;
+    padding: 12px 14px; font-size: 13.5px; line-height: 1.6; color: #7a3b10; margin-bottom: 18px;
+  }
+  .revote b { color: #c2410c; }
   .reopen { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-muted); text-align: center; letter-spacing: -0.2px; }
   .reopen b { color: var(--ink); }
   .err { color: var(--danger); font-size: 14px; margin-top: 12px; text-align: center; letter-spacing: -0.2px; white-space: pre-wrap; }
@@ -188,6 +193,8 @@
     <div class="tabs" id="tabs"></div>
 
     <div class="card form-view" id="formView">
+      <div class="revote" id="revoteNote" hidden></div>
+
       <div class="field">
         <label for="voterName">이름</label>
         <input type="text" id="voterName" placeholder="투표자 이름을 입력하세요" maxlength="40" autocomplete="off">
@@ -231,19 +238,19 @@
   // 진행 중인 투표 목록. 키와 후보 개수는 api/vote.js 의 POLLS 와 반드시 일치해야 합니다.
   // 마감된 투표(어묵탕)는 여기서 빼고, 결과는 /results 페이지에 이미지로 보관합니다.
   const POLLS = {
-    sanjeok: {
-      title: '산적구이',
-      storageKey: 'sanjeok_vote_v1',
+    sanjeok2: {
+      title: '산적구이 재투표',
+      storageKey: 'sanjeok2_vote_v1',
+      // 재투표 안내 (투표 화면 맨 위에 표시)
+      revoteNote: '1차 투표(10/26~10/27)에서 <b>실속 산적구이</b>와 <b>산도적도 반할 산적구이</b>가 각 6표로 <b>동점</b>이 나와, 두 후보로 다시 투표합니다.<br>1차 투표 참여 여부와 관계없이 <b>모두 다시 투표</b>해 주세요.',
       options: [
-        { name: '실속 산적구이' },
-        { name: '맛있는 산적구이' },
-        { name: '불고기맛 산적구이' },
-        { name: '더 큰 산적구이' },
-        { name: '알찬 산적구이' },
-        { name: '산도적도 반할 산적구이' },
+        { name: '실속 산적구이', desc: '1차 투표 공동 1위' },
+        { name: '산도적도 반할 산적구이', desc: '1차 투표 공동 1위' },
       ],
     },
   };
+  // 예전 링크(?poll=sanjeok)로 들어와도 재투표 탭이 열리게 함
+  const POLL_ALIASES = { sanjeok: 'sanjeok2' };
   const POLL_IDS = Object.keys(POLLS);
   const NAME_KEY = 'voter_name';
 
@@ -251,12 +258,14 @@
   // 관리자 키: 주소에 ?key=... 가 있으면 관리자로 간주 (서버가 실제 검증)
   const ADMIN_KEY = params.get('key') || '';
   // 주소에 ?poll= 이 있으면 그 탭, 없으면 초기화 때 정함(투표한 탭 우선)
-  let currentPoll = POLLS[params.get('poll')] ? params.get('poll') : null;
+  const requestedPoll = POLL_ALIASES[params.get('poll')] || params.get('poll');
+  let currentPoll = POLLS[requestedPoll] ? requestedPoll : null;
   let selected = null;
   let myChoice = null;
   let pollTimer = null;
 
   function poll() { return POLLS[currentPoll]; }
+  function btnLabel() { return poll().revoteNote ? '재투표 확인하기' : '투표 확인하기'; }
 
   // GET 요청 URL (관리자면 key 붙여서 이름까지 받아옴)
   function tallyUrl(id) {
@@ -359,7 +368,10 @@
     document.getElementById('formErr').textContent = '';
     const btn = document.getElementById('submitBtn');
     btn.disabled = false;
-    btn.textContent = '투표 확인하기';
+    btn.textContent = btnLabel();
+    const note = document.getElementById('revoteNote');
+    note.hidden = !poll().revoteNote;
+    note.innerHTML = poll().revoteNote ? '🔁 <b>재투표 안내</b><br>' + poll().revoteNote : '';
     document.getElementById('resultTitle').textContent = '실시간 투표 결과 · ' + poll().title;
     document.getElementById('totalLine').textContent = '집계 중...';
     document.getElementById('bars').innerHTML = '';
@@ -431,13 +443,13 @@
         // 결과는 투표했던 브라우저에서만 보인다.
         err.textContent = '이미 투표한 이름입니다.\n투표했던 곳(카톡, 노트북, 사용한 브라우저 등)에서 다시 열면 결과를 볼 수 있어요.';
         btn.disabled = false;
-        btn.textContent = '투표 확인하기';
+        btn.textContent = btnLabel();
         return;
       }
       if (!res.ok) {
         err.textContent = data.error || '투표에 실패했어요. 잠시 후 다시 시도해주세요.';
         btn.disabled = false;
-        btn.textContent = '투표 확인하기';
+        btn.textContent = btnLabel();
         return;
       }
 
@@ -450,7 +462,7 @@
     } catch (e) {
       err.textContent = '네트워크 오류가 발생했어요. 인터넷 연결을 확인해주세요.';
       btn.disabled = false;
-      btn.textContent = '투표 확인하기';
+      btn.textContent = btnLabel();
     }
   }
 

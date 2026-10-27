@@ -13,7 +13,8 @@
 const POLLS = {
   // closed: true 인 투표는 더 이상 표를 받지 않는다 (결과는 /results 페이지에 이미지로 보관)
   eomuk:   { table: 'squid_votes',   optionCount: 8, closed: true }, // 어묵탕 (마감)
-  sanjeok: { table: 'sanjeok_votes', optionCount: 6 }, // 산적구이
+  sanjeok: { table: 'sanjeok_votes', optionCount: 6, closed: true }, // 산적구이 1차 (마감, 동점)
+  sanjeok2: { table: 'sanjeok2_votes', optionCount: 2 }, // 산적구이 재투표 (1차 공동 1위 2개)
 };
 const DEFAULT_POLL = 'eomuk';
 
