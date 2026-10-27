@@ -110,6 +110,8 @@
   .btn:active { transform: scale(0.98); }
   .btn:disabled { opacity: 0.45; cursor: default; transform: none; }
 
+  .reopen { margin-top: 14px; font-size: 13px; line-height: 1.5; color: var(--ink-muted); text-align: center; letter-spacing: -0.2px; }
+  .reopen b { color: var(--ink); }
   .err { color: var(--danger); font-size: 14px; margin-top: 12px; text-align: center; letter-spacing: -0.2px; white-space: pre-wrap; }
 
   .results { display: none; }
@@ -198,6 +200,7 @@
 
       <button class="btn" id="submitBtn" onclick="submitVote()">투표 확인하기</button>
       <div class="err" id="formErr"></div>
+      <div class="reopen">💡 <b>이미 투표하셨나요?</b> 투표했던 곳(카톡, 노트북, 사용한 브라우저 등)에서 다시 열어주세요. 같은 곳에서 열면 결과가 바로 보여요.</div>
     </div>
 
     <div class="card results" id="results">
@@ -430,10 +433,11 @@
       const data = await res.json();
 
       if (res.status === 409) {
-        // 이미 투표한 이름 → 다시 투표할 수 없으니 결과 화면으로 보냄
-        saveLocal(id, voterName, null);
-        alert(data.error || '이미 투표한 이름입니다. 결과 화면으로 이동합니다.');
-        if (id === currentPoll) openPoll();
+        // 이미 투표한 이름 → 결과는 보여주지 않음 (남의 이름으로 결과를 보는 것 방지).
+        // 결과는 투표했던 브라우저에서만 보인다.
+        err.textContent = '이미 투표한 이름입니다.\n투표했던 곳(카톡, 노트북, 사용한 브라우저 등)에서 다시 열면 결과를 볼 수 있어요.';
+        btn.disabled = false;
+        btn.textContent = '투표 확인하기';
         return;
       }
       if (!res.ok) {
