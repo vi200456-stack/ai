@@ -51,6 +51,7 @@
   .ih { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
   .ih b { font-size: 18px; letter-spacing: -0.3px; }
   .badge { font-size: 12px; font-weight: 800; background: #e3f3e7; color: #227a3a; border-radius: 7px; padding: 3px 8px; white-space: nowrap; }
+  .src { display: inline-block; font-size: 12.5px; font-weight: 700; color: #5b4b3b; background: #f3ede4; border-radius: 7px; padding: 3px 9px; margin: 2px 0 6px; }
   .meta { font-size: 13px; color: var(--ink-muted); margin-bottom: 12px; }
   .win { background: #fffaf2; border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.5; }
   .win .t { color: var(--primary); font-weight: 800; }
@@ -99,7 +100,8 @@
       badge: '투표 중단',
       note: '→ 후보가 바뀌어 중단, 새 후보로 다시 투표',
       candidates: ['실속 산적구이', '산도적도 반할 산적구이'],
-      image: '/results/sanjeok-2.png',
+      source: '상품기획팀',
+      image: '/results/sanjeok-2.png?v=2',
       file: '산적구이_재투표_중단_결과.png',
     },
     {
@@ -111,7 +113,8 @@
       note: '→ 동점으로 두 후보 재투표 진행',
       candidates: ['실속 산적구이', '맛있는 산적구이', '불고기맛 산적구이', '더 큰 산적구이',
                    '알찬 산적구이', '산도적도 반할 산적구이'],
-      image: '/results/sanjeok-1.png',
+      source: '상품기획팀',
+      image: '/results/sanjeok-1.png?v=2',
       file: '산적구이_1차_제품명_투표결과.png',
     },
     {
@@ -122,7 +125,8 @@
       winnerVotes: 8,
       candidates: ['깊은맛 모둠 어묵탕', '진국 모둠 어묵탕', '따끈한 하루 어묵탕', '어묵엔 국물',
                    '탱글 한 그릇 어묵탕', '심야포차 어묵탕', '부산 진국 어묵탕', '부산 포차 어묵탕'],
-      image: '/results/eomuk.png',
+      source: '상품기획팀',
+      image: '/results/eomuk.png?v=2',
       file: '어묵탕_제품명_투표결과.png',
     },
   ];
@@ -164,6 +168,7 @@
       const matched = q ? a.candidates.filter(c => c.toLowerCase().includes(q.toLowerCase()) && !a.winners.includes(c)) : [];
       return '<div class="item">' +
         '<div class="ih"><b>' + hl(a.title, q) + '</b><span class="badge">' + escapeHtml(a.badge || '투표 마감') + '</span></div>' +
+        (a.source ? '<div class="src">📝 네이밍: ' + escapeHtml(a.source) + '</div>' : '') +
         '<div class="meta">' + escapeHtml(a.period) + ' · 총 ' + a.total + '표</div>' +
         '<div class="win"><span class="t">🏆 ' + (a.winLabel || (a.winners.length > 1 ? '공동 1위' : '1위')) + ' (' + (a.winners.length > 1 ? '각 ' : '') + a.winnerVotes + '표)</span><br>' +
           a.winners.map(w => hl(w, q)).join(' · ') +
