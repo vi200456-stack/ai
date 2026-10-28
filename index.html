@@ -107,6 +107,10 @@
     padding: 12px 14px; font-size: 13.5px; line-height: 1.6; color: #7a3b10; margin-bottom: 18px;
   }
   .revote b { color: #c2410c; }
+  .nopoll { text-align: center; padding: 34px 20px; }
+  .nopoll-emoji { font-size: 36px; margin-bottom: 8px; }
+  .nopoll b { font-size: 17px; }
+  .nopoll p { margin-top: 8px; font-size: 14px; color: var(--ink-muted); line-height: 1.5; }
   .guide {
     background: #f4f7ff; border: 1.5px solid #b9cdf5; border-radius: 12px;
     padding: 11px 13px; font-size: 13.5px; line-height: 1.55; color: #1f3f8a; margin-bottom: 18px;
@@ -192,6 +196,12 @@
 
     <div class="tabs" id="tabs"></div>
 
+    <div class="card nopoll" id="noPoll" hidden>
+      <div class="nopoll-emoji">🗳️</div>
+      <b>지금 진행 중인 투표가 없어요.</b>
+      <p>마감된 투표 결과는 아래 [지난 투표 결과 보기]에서 확인할 수 있어요.</p>
+    </div>
+
     <div class="card form-view" id="formView">
       <div class="revote" id="revoteNote" hidden></div>
 
@@ -239,6 +249,7 @@
     sanjeok3: {
       title: '저가형 산적구이',
       storageKey: 'sanjeok3_vote_v1',
+      closed: true, // 10/28 마감 (결과는 /results 에 보관)
       // 비슷한 이름끼리 이어지도록 순서를 맞춤 (고기산적 → 불고기맛 → 정석 → 고기 → 한입)
       options: [
         { name: '프리미엄 고기산적' },
@@ -254,7 +265,8 @@
   };
   // 예전 산적구이 링크(?poll=sanjeok, sanjeok2)로 들어와도 지금 산적구이 투표가 열리게 함
   const POLL_ALIASES = { sanjeok: 'sanjeok3', sanjeok2: 'sanjeok3' };
-  const POLL_IDS = Object.keys(POLLS);
+  // 마감(closed)된 투표는 화면에 띄우지 않음
+  const POLL_IDS = Object.keys(POLLS).filter(id => !POLLS[id].closed);
   const NAME_KEY = 'voter_name';
 
   const params = new URLSearchParams(location.search);
@@ -582,6 +594,14 @@
       const resultsCard = document.getElementById('results');
       resultsCard.insertBefore(banner, resultsCard.firstChild);
     }
+    // 진행 중인 투표가 하나도 없으면 안내만 보여줌
+    if (POLL_IDS.length === 0) {
+      document.getElementById('tabs').hidden = true;
+      document.getElementById('formView').classList.add('hide');
+      document.getElementById('noPoll').hidden = false;
+      return;
+    }
+    if (currentPoll && !POLL_IDS.includes(currentPoll)) currentPoll = null;
     // 기본 링크로 들어오면 이미 투표한 탭을 먼저 열어서 결과가 바로 보이게 함
     if (!currentPoll) {
       currentPoll = POLL_IDS.find(id => hasVoted(id)) || POLL_IDS[0];
