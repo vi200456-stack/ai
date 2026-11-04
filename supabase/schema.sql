@@ -53,3 +53,14 @@ create table if not exists public.sanjeok3_votes (
 create unique index if not exists sanjeok3_votes_voter_name_key
   on public.sanjeok3_votes (lower(voter_name));
 alter table public.sanjeok3_votes enable row level security;
+
+-- 오곡 안심텐더 제품명 투표 테이블
+create table if not exists public.tender_votes (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  voter_name  text not null,
+  choice      int  not null check (choice between 1 and 20)
+);
+create unique index if not exists tender_votes_voter_name_key
+  on public.tender_votes (lower(voter_name));
+alter table public.tender_votes enable row level security;

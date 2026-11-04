@@ -16,6 +16,7 @@ const POLLS = {
   sanjeok: { table: 'sanjeok_votes', optionCount: 6, closed: true }, // 산적구이 1차 (마감, 동점)
   sanjeok2: { table: 'sanjeok2_votes', optionCount: 2, closed: true }, // 산적구이 재투표 (후보 변경으로 중단)
   sanjeok3: { table: 'sanjeok3_votes', optionCount: 8, closed: true }, // 저가형 산적구이 (10/28 마감)
+  tender:   { table: 'tender_votes',   optionCount: 5 }, // 오곡 안심텐더
 };
 const DEFAULT_POLL = 'eomuk';
 
