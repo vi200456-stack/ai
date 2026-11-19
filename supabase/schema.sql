@@ -64,3 +64,14 @@ create table if not exists public.tender_votes (
 create unique index if not exists tender_votes_voter_name_key
   on public.tender_votes (lower(voter_name));
 alter table public.tender_votes enable row level security;
+
+-- 전 4종 시리즈 네이밍 투표 테이블 (시리즈 단위로 1개 선택)
+create table if not exists public.jeon_votes (
+  id          uuid primary key default gen_random_uuid(),
+  created_at  timestamptz not null default now(),
+  voter_name  text not null,
+  choice      int  not null check (choice between 1 and 20)
+);
+create unique index if not exists jeon_votes_voter_name_key
+  on public.jeon_votes (lower(voter_name));
+alter table public.jeon_votes enable row level security;
